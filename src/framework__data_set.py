@@ -12,12 +12,14 @@ from datetime import datetime, timedelta
 from os import listdir
 from os.path import isfile, join
 import numpy as np
+from copy import deepcopy
 
 """
 ***********************************************************************************************************************
     TimeSeriesDataSet Class
 ***********************************************************************************************************************
 """
+
 
 class TimeSeriesDataSet:
     """
@@ -50,6 +52,10 @@ class TimeSeriesDataSet:
         flat_np_array = np.concatenate(np_array_list)
         return flat_np_array.mean(), flat_np_array.std()
 
+    def __set_mean_and_std(self, mean, std):
+        self.__mean = mean
+        self.__std = std
+
     """
     *******************************************************************************************************************
         API functions
@@ -81,8 +87,7 @@ class TimeSeriesDataSet:
     def get_marged(self):
         return self.merged_df
 
-
-    def sub_sample_data(self, sub_sample_rate):
+    def sub_sample_data(self, sub_sample_rate, aggregation_type='max'):
         """
         creates sub sampling according to the rate (if for example rate = 5, then every 5 samples, the one with the
         maximal value is chosen to be in the data set).
@@ -90,15 +95,22 @@ class TimeSeriesDataSet:
         """
         new_list_of_df = []
 
-        for df in self:
-            sub_sampled_data = df.groupby(df.index // sub_sample_rate).max()
+        for df in self.list_of_df:
+            if aggregation_type == 'max':
+                sub_sampled_data = df.groupby(df.index // sub_sample_rate).max()
+            elif aggregation_type == 'min':
+                sub_sampled_data = df.groupby(df.index // sub_sample_rate).min()
+            elif aggregation_type == 'avg':
+                sub_sampled_data = df.groupby(df.index // sub_sample_rate).mean()
+            else:
+                raise ValueError(f"aggregation_type = {aggregation_type} is not supported")
+
             assert len(sub_sampled_data) == ((len(df) + sub_sample_rate - 1) // sub_sample_rate)
             new_list_of_df.append(sub_sampled_data)
 
         self.list_of_df = new_list_of_df
 
-
-    def deepAR_sub_sample_data(self, sub_sample_rate, agg = "max"):
+    def deepAR_sub_sample_data(self, sub_sample_rate, agg="max"):
         """
         creates sub sampling according to the rate (if for example rate = 5, then every 5 samples, the one with the
         maximal value is chosen to be in the data set).
@@ -113,12 +125,11 @@ class TimeSeriesDataSet:
                 sub_sampled_data = df.groupby(df.index // sub_sample_rate).min()
             if agg == "avg":
                 sub_sampled_data = df.groupby(df.index // sub_sample_rate).mean()
-            
+
             assert len(sub_sampled_data) == ((len(df) + sub_sample_rate - 1) // sub_sample_rate)
             new_list_of_df.append(sub_sampled_data)
 
         self.list_of_df = new_list_of_df
-
 
     def add_features(self):  # 2022-04-21 02:50:00   - example
         """
@@ -128,7 +139,7 @@ class TimeSeriesDataSet:
         new_list_of_df = []
         for df in self:
             df['hour'] = df['time'].apply(lambda x: int((str(x).split(' ')[1].split(':')[0])))
-            df['day'] = df['time'].apply(lambda x: pd.Timestamp(str(x).split(' ')[0]).day_of_week) # or dayofweek
+            df['day'] = df['time'].apply(lambda x: pd.Timestamp(str(x).split(' ')[0]).day_of_week)  # or dayofweek
         self.list_of_df = new_list_of_df
 
     def mean_sub_sample_data(self, sub_sample_rate):
@@ -146,8 +157,7 @@ class TimeSeriesDataSet:
             new_list_of_df.append(sub_sampled_data)
 
         self.list_of_df = new_list_of_df
-    
-    
+
     def filter_data_that_is_too_short(self, data_length_limit):
         """
         filters the data samples. all data samples that have a length that is lower than data_length_limit will be
@@ -161,7 +171,6 @@ class TimeSeriesDataSet:
                 new_list_of_df.append(df)
 
         self.list_of_df = new_list_of_df
-
 
     def filter_series_with_zeros(self):
         """
@@ -190,7 +199,6 @@ class TimeSeriesDataSet:
 
         self.list_of_df = new_list_of_df
 
-
     def plot_dataset(self, number_of_samples):
         """
         randomly selects samples from the data sets and plots . x-axis is time and y-axis is the value
@@ -213,7 +221,8 @@ class TimeSeriesDataSet:
         """
         assert not self.__is_data_scaled
         self.__is_data_scaled = True
-        self.__mean, self.__std = self.__get_mean_and_std()
+        if self.__mean is None or self.__std is None:
+            self.__mean, self.__std = self.__get_mean_and_std()
         # print(f"self.__mean = {self.__mean}, self.__std = {self.__std}", )
         # print("max_sample = ", max_sample, " min_sample = ", min_sample)
         for df in self:
@@ -261,6 +270,36 @@ class TimeSeriesDataSet:
         assert min(len(df) for df in train) == (min(len(df) for df in test) - length_to_predict)
         assert max(len(df) for df in train) == (max(len(df) for df in test) - length_to_predict)
         return train, test
+
+    def split_to_train_and_test_Lee(self, train_ratio=0.8):
+        """
+        Split the data into train and test sets according to a specified train ratio.
+        The splitting is made upon the dataframes, and not the samples.
+        """
+        random.shuffle(self.list_of_df)
+        test_df_index = int(len(self.list_of_df) * train_ratio)
+        train = TimeSeriesDataSet(list_of_df=self.list_of_df[:test_df_index])
+        test = TimeSeriesDataSet(list_of_df=self.list_of_df[test_df_index:])
+        mean_train, std_train = train.__get_mean_and_std()
+        train.__set_mean_and_std(mean_train, std_train)
+        test.__set_mean_and_std(mean_train, std_train)
+
+        return train, test
+
+    def prepare_dataset_for_lstm(self, look_back):
+        """
+        Prepare the dataset for the LSTM model such that for each dataframe, each sample will have the samples
+        based on the look_back parameter. The output of each dataframe will be a dataframe with the columns: time,
+        sample and sample(t-1), sample(t-2), ..., sample(t-look_back)
+        """
+        for idx, df in enumerate(self.list_of_df):
+            df = deepcopy(df[['time', 'sample']])
+            df.set_index('time', inplace=True)
+
+            for i in range(1, look_back + 1):
+                df[f'sample(t-{str(i)})'] = df['sample'].shift(i)
+            df.dropna(inplace=True)
+            self.list_of_df[idx] = df
 
 
 """
