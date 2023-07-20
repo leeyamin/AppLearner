@@ -81,7 +81,7 @@ class LSTMPredictor(nn.Module):
 
 
 class PytorchLSTMTester:
-    def __init__(self, length_of_shortest_time_series, metric, app, model_name = "LSTM"):
+    def __init__(self, length_of_shortest_time_series, model_name="LSTM"):
         # prepare parameters
         self.model_name = model_name
         self.__msg = "[PytorchLSTMTester]"
@@ -113,14 +113,12 @@ class PytorchLSTMTester:
             batch_size=64,
             criterion=self.__criterion,
             optimizer=self.__optimizer,
-            model_name=self.model_name,
         )
 
     def predict(self, ts_as_df_start, how_much_to_predict):
         self.__best_model.flatten_parameters()
         return pytorch__driver_for_test_bench.predict(
-            ts_as_df_start=ts_as_df_start, how_much_to_predict=how_much_to_predict, best_model=self.__best_model,
-            model_name = "LSTM"
+            ts_as_df_start=ts_as_df_start, how_much_to_predict=how_much_to_predict, best_model=self.__best_model
         )
 
 
@@ -137,7 +135,6 @@ def main(test_to_perform):
         class_to_test=PytorchLSTMTester,
         path_to_data="../data/",
         tests_to_perform=test_to_perform,
-        model_name="LSTM",
     )
     tb.run_training_and_tests()
 

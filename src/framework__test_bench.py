@@ -167,8 +167,6 @@ class TestBench:
         length_of_shortest_time_series = min([len(df) for df in train] + [len(df) for df in test])
         model = self.__class_to_test(
             length_of_shortest_time_series=length_of_shortest_time_series,
-            metric=metric,
-            app=app
         )
         return model
 
