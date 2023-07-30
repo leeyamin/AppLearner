@@ -31,6 +31,7 @@ class TimeSeriesDataSet:
         self.__is_data_scaled = False
         self.__mean = None
         self.__std = None
+        self.dfs_concatenated = None
 
     """
     *******************************************************************************************************************
@@ -95,6 +96,9 @@ class TimeSeriesDataSet:
         """
         new_list_of_df = []
 
+        assert sub_sample_rate > 0
+        if sub_sample_rate == 1:
+            return
         for df in self.list_of_df:
             if aggregation_type == 'max':
                 sub_sampled_data = df.groupby(df.index // sub_sample_rate).max()
@@ -300,6 +304,27 @@ class TimeSeriesDataSet:
                 df[f'sample(t-{str(i)})'] = df['sample'].shift(i)
             df.dropna(inplace=True)
             self.list_of_df[idx] = df
+
+    def record_df_indices(self):
+        """
+        Add a column to each dataframe that indicates the index of the dataframe in the list of dataframes.
+        """
+        for idx, df in enumerate(self.list_of_df):
+            df['source_df_idx'] = idx
+
+    def concatenate_dfs(self):
+        self.dfs_concatenated = pd.concat(self.list_of_df)
+
+    def recover_dfs_from_concatenated(self):
+        split_dfs = []
+
+        for idx in self.dfs_concatenated['source_df_idx'].unique():
+            split_dfs.append(self.dfs_concatenated[self.dfs_concatenated['source_df_idx'] == idx].drop('source_df_idx', axis=1))
+        for df in self.list_of_df:
+            df.drop('source_df_idx', axis=1, inplace=True)
+
+        for idx in range(0, len(self.list_of_df)):
+            assert self.list_of_df[idx].equals(split_dfs[idx])
 
 
 """
