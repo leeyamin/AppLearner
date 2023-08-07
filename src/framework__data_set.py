@@ -290,9 +290,9 @@ class TimeSeriesDataSet:
 
         return train, test
 
-    def prepare_dataset_for_lstm(self, look_back, horizon):
+    def prepare_dataset_for_time_series(self, look_back, horizon):
         """
-        Prepare the dataset for the LSTM model such that for each dataframe, each sample will have the samples
+        Prepare the dataset for time series such that for each dataframe, each sample will have the samples
         based on the look_back parameter. The output of each dataframe will be a dataframe with the columns: time,
         sample and sample(t-1), sample(t-2), ..., sample(t-look_back), sample(t+1), sample(t+2), ..., sample(t+horizon)
         """
