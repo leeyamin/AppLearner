@@ -15,7 +15,7 @@ class LSTM:
     def __init__(self, metric="container_cpu", app="collector", path_to_data="../data/"):
         # Set parameters
         self.app_to_test = app
-        self.file = app
+        self.file = f"../TrainedModels/LSTM/Keras/{app}_12min"
 
         # Extract dataset according to parametes
         self.dataset = ds.get_data_set(
@@ -209,3 +209,12 @@ class LSTM:
             if counter >= 10:
                 break
             counter += 1
+
+
+if __name__ == '__main__':
+    lstm = LSTM(
+        metric="container_cpu",
+        app="collector",
+        path_to_data="../data/",
+    )
+    lstm.run_LSTM()
