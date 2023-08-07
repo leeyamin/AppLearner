@@ -398,6 +398,9 @@ if __name__ == '__main__':
     print(f"Throwing out data that is less than {data_length_limit_in_minutes / 60} hours long.")
     dataset.filter_data_that_is_too_short(data_length_limit=data_length_limit_in_minutes)
 
+    # TODO: remove before commit, this is just for testing
+    dataset.list_of_df = dataset.list_of_df[:10]
+
     print(f"Subsampling data from 1 sample per 1 minute to 1 sample per {sub_sample_rate} minutes.")
     dataset.sub_sample_data(sub_sample_rate=sub_sample_rate, aggregation_type=aggregation_type)
     print("Splitting data into train and test.")
