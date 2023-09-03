@@ -17,7 +17,7 @@ horizon = 2
 model_name = 'lstm'
 hidden_size = 4
 num_stacked_layers = 1
-learning_rate = 0.001
+learning_rate = 0.0001
 num_epochs = 10
 # TODO: determine the loss function
 loss_function = nn.L1Loss(reduction='sum')

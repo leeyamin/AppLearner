@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 from copy import deepcopy
-from sklearn.preprocessing import MinMaxScaler
 from typing import Optional, Tuple
 
 import src.config as config
@@ -17,21 +16,26 @@ def transform_data(dataset_as_np, transformation_method='log'):
         return dataset_as_np
 
 
-def scale_data(dataset_as_np, scale_method='min-max', scaler=None):
+def scale_data(dataset_as_np, scale_method='min-max', scaling_attributes=None):
     """
     Scale the data using the specified method. Currently only supports min-max scaling.
     """
     if scale_method == 'min-max':
-        if scaler is None:
-            scaler = MinMaxScaler(feature_range=(0, 1))
-            scaler.fit_transform(dataset_as_np)
-        return scaler.transform(dataset_as_np), scaler
+        if scaling_attributes is None:
+            min = dataset_as_np.min()
+            max = dataset_as_np.max()
+            scaling_attributes = {'min': min, 'max': max}
+        else:
+            min = scaling_attributes['min']
+            max = scaling_attributes['max']
+        dataset_as_np = (dataset_as_np - min) / (max - min)
+    return dataset_as_np, scaling_attributes
 
 
 def transform_and_scale_data(dataset_as_np: np.ndarray,
                              transformation_method: str = 'log',
                              scale_method: str = 'min-max',
-                             scaler: Optional[MinMaxScaler] = None) -> Tuple[np.ndarray, Optional[MinMaxScaler]]:
+                             scaling_attributes: Optional[dict] = None) -> Tuple[np.ndarray, Optional[dict]]:
     """
     Transform and scale the data using the specified methods. Currently only supports log transformation and min-max
     scaling.
@@ -43,8 +47,9 @@ def transform_and_scale_data(dataset_as_np: np.ndarray,
     if transformation_method is not None:
         dataset_as_np = transform_data(dataset_as_np, transformation_method=transformation_method)
     if scale_method is not None:
-        dataset_as_np, scaler = scale_data(dataset_as_np, scale_method=scale_method, scaler=scaler)
-    return dataset_as_np, scaler
+        dataset_as_np, scaling_attributes = scale_data(dataset_as_np,
+                                                       scale_method=scale_method, scaling_attributes=scaling_attributes)
+    return dataset_as_np, scaling_attributes
 
 
 def split_data_into_x_and_y(data, look_back, horizon):
@@ -53,11 +58,14 @@ def split_data_into_x_and_y(data, look_back, horizon):
     return x, y
 
 
-def re_scale_data(dataset_as_np, scaler):
+def re_scale_data(dataset_as_np, scale_method, scaling_attributes):
     """
-    Rescale the data.
+    Rescale the data. Currently only supports min-max re-scaling.
     """
-    dataset_as_np = scaler.inverse_transform(dataset_as_np)
+    if scale_method == 'min-max':
+        min = scaling_attributes['min']
+        max = scaling_attributes['max']
+        dataset_as_np = dataset_as_np * (max - min) + min
     return dataset_as_np
 
 
@@ -73,7 +81,7 @@ def re_transform_data(dataset_as_np, transformation_method='log'):
 def re_transform_and_re_scale_data(dataset_as_np: np.ndarray,
                                    transformation_method: str = 'log',
                                    scale_method: str = 'min-max',
-                                   scaler: Optional[MinMaxScaler] = None) -> np.ndarray:
+                                   scaling_attributes: Optional[dict] = None) -> np.ndarray:
     """
     Reverse transforms and scales the data using the specified methods. Currently only supports log transformation and min-max
     scaling.
@@ -83,32 +91,15 @@ def re_transform_and_re_scale_data(dataset_as_np: np.ndarray,
     if transformation_method is None and scale_method is None:
         return dataset_as_np
     if scale_method is not None:
-        dataset_as_np = re_scale_data(dataset_as_np, scaler=scaler)
+        dataset_as_np = re_scale_data(dataset_as_np, scale_method, scaling_attributes)
     if transformation_method is not None:
         dataset_as_np = re_transform_data(dataset_as_np, transformation_method=transformation_method)
     return dataset_as_np
 
 
-def re_format_y_to_df(y_df, look_back, horizon, transformation_method, scale_method, scaler):
-    """
-    To rescale the data, we need to reformat the data to the original shape. This funtion uses dummy variables to
-    represent the x values and then rescales the y values using the specified methods.
-    """
-    y_df = y_df.numpy()
-    dummies = np.zeros((y_df.shape[0], look_back + horizon))
-    dummies[:, 0:horizon] = y_df.squeeze()
-    dummies = re_transform_and_re_scale_data(dummies,
-                                             transformation_method=transformation_method,
-                                             scale_method=scale_method, scaler=scaler)
-    return dummies[:, 0:horizon]
-
-
 def prepare_data_for_run(data):
     print(f"Throwing out data that is less than {config.data_length_limit_in_minutes / 60} hours long.")
     data.filter_data_that_is_too_short(data_length_limit=config.data_length_limit_in_minutes)
-
-    # TODO: remove before commit, this is just for testing
-    data.list_of_df = data.list_of_df[:10]
 
     print(f"Subsampling data from 1 sample per 1 minute to 1 sample per {config.sub_sample_rate} minutes.")
     data.sub_sample_data(sub_sample_rate=config.sub_sample_rate, aggregation_type=config.aggregation_type)
@@ -139,18 +130,28 @@ def prepare_data_for_run(data):
     train_set_as_np = train_set.to_numpy()
     test_set_as_np = test_set.to_numpy()
 
-    print(f"Transforming and scaling data using {config.transformation_method} transformation "
-          f"and {config.scale_method} scaling.")
-    train_set_as_np, scaler = transform_and_scale_data(train_set_as_np,
-                                                       transformation_method=config.transformation_method,
-                                                       scale_method=config.scale_method, scaler=None)
-    test_set_as_np, _ = transform_and_scale_data(test_set_as_np,
-                                                 transformation_method=config.transformation_method,
-                                                 scale_method=config.scale_method, scaler=scaler)
-
     print("Preparing data for training.")
     x_train, y_train = split_data_into_x_and_y(train_set_as_np, config.look_back, config.horizon)
     x_test, y_test = split_data_into_x_and_y(test_set_as_np, config.look_back, config.horizon)
+
+    print(f"Transforming and scaling data using {config.transformation_method} transformation "
+          f"and {config.scale_method} scaling.")
+    x_train, scaling_attributes = transform_and_scale_data(x_train,
+                                                           transformation_method=config.transformation_method,
+                                                           scale_method=config.scale_method,
+                                                           scaling_attributes=None)
+    x_test, _ = transform_and_scale_data(x_test,
+                                         transformation_method=config.transformation_method,
+                                         scale_method=config.scale_method,
+                                         scaling_attributes=scaling_attributes)
+    y_train, _ = transform_and_scale_data(y_train,
+                                          transformation_method=config.transformation_method,
+                                          scale_method=config.scale_method,
+                                          scaling_attributes=scaling_attributes)
+    y_test, _ = transform_and_scale_data(y_test,
+                                         transformation_method=config.transformation_method,
+                                         scale_method=config.scale_method,
+                                         scaling_attributes=scaling_attributes)
 
     # flip the data to be along the time axis
     x_train = deepcopy(np.flip(x_train, axis=1))
@@ -172,4 +173,4 @@ def prepare_data_for_run(data):
     test_set_source_df_idx = torch.tensor(test_set_source_df_idx)
 
     return (train_dataset, test_dataset,
-            x_train, y_train, x_test, y_test, train_set_source_df_idx, test_set_source_df_idx, scaler)
+            x_train, y_train, x_test, y_test, train_set_source_df_idx, test_set_source_df_idx, scaling_attributes)
