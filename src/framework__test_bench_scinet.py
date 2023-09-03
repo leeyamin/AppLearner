@@ -378,8 +378,9 @@ class DumbPredictor:
 
 
 def main(test_to_perform):
+    import framework__scinet as scinet
     tb = TestBench(
-        class_to_test=DumbPredictor,
+        class_to_test=scinet.PytorchSCITester,
         path_to_data="../data/",
         tests_to_perform=test_to_perform
     )
@@ -394,24 +395,7 @@ def main(test_to_perform):
 
 if __name__ == "__main__":
     test_to_perform = (
-        # Container CPU
-        {"metric": "container_cpu", "app": "kube-rbac-proxy", "prediction length": 16, "sub sample rate": 30,
-         "data length limit": 30},
-        {"metric": "container_cpu", "app": "dns", "prediction length": 16, "sub sample rate": 30,
-         "data length limit": 30},
-        {"metric": "container_cpu", "app": "collector", "prediction length": 16, "sub sample rate": 30,
-         "data length limit": 30},
-        # Container Memory
-        {"metric": "container_mem", "app": "nmstate-handler", "prediction length": 16, "sub sample rate": 30,
-         "data length limit": 30},
-        {"metric": "container_mem", "app": "coredns", "prediction length": 16, "sub sample rate": 30,
-         "data length limit": 30},
-        {"metric": "container_mem", "app": "keepalived", "prediction length": 16, "sub sample rate": 30,
-         "data length limit": 30},
-        # Node Memory
-        {"metric": "node_mem", "app": "moc/smaug", "prediction length": 16, "sub sample rate": 30,
-         "data length limit": 30},
-        {"metric": "node_mem", "app": "emea/balrog", "prediction length": 16, "sub sample rate": 30,
-         "data length limit": 30}
+        {"metric": "container_cpu", "app": "collector", "prediction length": 16, "sub sample rate": 5,
+         "data length limit": 60},
     )
     main(test_to_perform)
