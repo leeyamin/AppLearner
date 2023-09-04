@@ -347,36 +347,6 @@ class TestBench:
 """
 
 
-class DumbPredictor:
-    """
-    A dumb predictor is used to test the framework- it takes the first samples and sets them as predictions.
-    """
-
-    def __init__(self, length_of_shortest_time_series, metric, app):
-        print("Constructor called.")
-        self.print_once = True
-
-    def learn_from_data_set(self, training_data_set):
-        print("Training started.")
-        print("What does a dataframe to learn on look like?")
-        print(training_data_set[0])
-        print("Training ending.")
-
-    def predict(self, ts_as_df_start, how_much_to_predict):
-        # if self.print_once:
-        #     self.print_once = False
-        #     print("What does a dataframe to predict look like?")
-        #     display(ts_as_df_start)
-        ts_as_np = ts_as_df_start["sample"].to_numpy()
-        res = np.resize(ts_as_np, how_much_to_predict)
-        # these checks will also be done by the testbench
-        assert isinstance(res, np.ndarray)
-        assert len(res) == how_much_to_predict
-        assert res.shape == (how_much_to_predict,)
-        assert res.dtype == np.float64
-        return res
-
-
 def main(test_to_perform):
     import framework__scinet as scinet
     tb = TestBench(
@@ -396,6 +366,6 @@ def main(test_to_perform):
 if __name__ == "__main__":
     test_to_perform = (
         {"metric": "container_cpu", "app": "collector", "prediction length": 16, "sub sample rate": 5,
-         "data length limit": 60},
+         "data length limit": 80},
     )
     main(test_to_perform)
