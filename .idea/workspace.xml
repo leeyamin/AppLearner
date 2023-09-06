@@ -5,9 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7c4fca50-34d0-47d0-a400-7bde782bfbb2" name="Changes" comment="scinet reformatted and running">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Notebooks/8_TCN.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/Notebooks/8_TCN.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/framework_TCN.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/framework_TCN.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Notebooks/4_NBeats.ipynb" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -36,7 +34,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="main" />
+        <entry key="$PROJECT_DIR$" value="TCN_checkup" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -61,7 +59,7 @@
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "WebServerToolWindowFactoryState": "false",
-    "git-widget-placeholder": "TCN__checkup",
+    "git-widget-placeholder": "main",
     "last_opened_file_path": "/home/ayehoshu/AppLearner/src",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -112,6 +110,9 @@
       <module name="AppLearner" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
       <option name="SDK_HOME" value="" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src" />
       <option name="IS_MODULE_SDK" value="true" />
@@ -464,7 +465,8 @@
     <MESSAGE value="Remove LSTM project" />
     <MESSAGE value="Configure project structure" />
     <MESSAGE value="Split data into x and y and then scale" />
-    <option name="LAST_COMMIT_MESSAGE" value="Split data into x and y and then scale" />
+    <MESSAGE value="TCN reformatted and running" />
+    <option name="LAST_COMMIT_MESSAGE" value="TCN reformatted and running" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

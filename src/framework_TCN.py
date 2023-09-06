@@ -86,12 +86,12 @@ def main():
     )
     if use_pretrained_model:
         # load model
-        model = TCNModel.load("Multivariate_TCN_model_after_HP_tuning.pt")
+        model = TCNModel.load("TrainedModels/TCN/Multivariate_TCN_model.pt")
     else:
         # fit model
         model.fit(series=train_series_lst, past_covariates=None, verbose=True)
         # save model
-        model.save("Multivariate_TCN_model_after_HP_tuning.pt")
+        model.save("TrainedModels/TCN/Multivariate_TCN_model_after_HP_tuning.pt")
     # evaluate model
     model.to_cpu()
     # when plotting, we remove under 500, so lets also remove them from the test set
