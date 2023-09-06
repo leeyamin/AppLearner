@@ -1,11 +1,12 @@
 # imports
 import sys
 import os
+import time
+
 # setting path
 sys.path.append(os.path.abspath('..'))
 import framework__data_set as ds
 import pandas as pd
-import torch
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 from darts import TimeSeries
@@ -18,17 +19,18 @@ from darts.utils.missing_values import extract_subseries
 
 
 def main():
+    use_pretrained_model = True
     # get data
     cpu_dataset = ds.get_data_set(
         metric="container_cpu",
         application_name="collector",
-        path_to_data="../data/OperatreFirst_PrometheusData_AppLearner/"
+        path_to_data="../data/"
     )
 
     mem_dataset = ds.get_data_set(
         metric="container_mem",
         application_name="collector",
-        path_to_data="../data/OperatreFirst_PrometheusData_AppLearner/"
+        path_to_data="../data/"
     )
     # sort data by time and build merged dataframe
     cpu_dataset.sort_by_time()
@@ -69,7 +71,7 @@ def main():
     model = TCNModel(
         dropout=0.26,
         batch_size=16,
-        n_epochs=500,
+        n_epochs=2,
         num_filters=5,
         num_layers=3,
         optimizer_kwargs={"lr": 0.0003},
@@ -80,24 +82,34 @@ def main():
         weight_norm=True,
         dilation_base=4,
         likelihood=GaussianLikelihood(),
-        pl_trainer_kwargs={"accelerator": "gpu", "devices": 8}
+        pl_trainer_kwargs={"accelerator": "cpu"}
     )
-    # fit model
-    model.fit(series=train_series_lst, past_covariates=None, verbose=True)
-    # save model
-    model.save("Multivariate_TCN_model_after_HP_tuning.pt")
+    if use_pretrained_model:
+        # load model
+        model = TCNModel.load("Multivariate_TCN_model_after_HP_tuning.pt")
+    else:
+        # fit model
+        model.fit(series=train_series_lst, past_covariates=None, verbose=True)
+        # save model
+        model.save("Multivariate_TCN_model_after_HP_tuning.pt")
     # evaluate model
     model.to_cpu()
+    # when plotting, we remove under 500, so lets also remove them from the test set
+    test_series_lst = [series for series in test_series_lst if len(series) > 500]
+    print(f"starting back_test, it will take a while (Copilot estimate it: {len(test_series_lst) * 2 / 60} hours")
+    time.sleep(3)
+    start_time = time.time()
     backtest_en = model.historical_forecasts(
         series=test_series_lst,
         past_covariates=None,
         forecast_horizon=60,
         stride=3,
-        retrain=False,
-        verbose=False,
+        verbose=True,
     )
+    print("--- Back testing took %s seconds ---" % (time.time() - start_time))
     for orig, backtest in zip(test_series_lst, backtest_en):
         if len(orig) < 500:
+            print("Skipping sample with length", len(orig))
             continue
         maes = mae(orig, backtest, n_jobs=1, verbose=False)
         rmses = rmse(orig, backtest, n_jobs=1, verbose=False)
@@ -113,7 +125,8 @@ def main():
         plt.legend()
         plt.show()
 
+
 if __name__ == '__main__':
     # freeze_support() so we could train with multi gpu
-    torch.multiprocessing.freeze_support()
+    # torch.multiprocessing.freeze_support()
     main()
