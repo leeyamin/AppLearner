@@ -304,8 +304,8 @@ class TestBenchDeepAR:
         training_time = training_stop_time - training_start_time
         print(self.__msg, f"Training took {training_time} seconds.")
         print(self.__msg, "Starting testing loop")
-        raw_predictions, x = model.predictions(val_dataloader, test_dataloader)
-        raw_predictions = {"prediction":torch.add(torch.mul(raw_predictions[0], std),mean)}
+        raw_predictions, x = model.predictions(test_dataloader)
+        raw_predictions = {"prediction":torch.add(torch.mul(raw_predictions, std),mean)}
         x["decoder_target"] = torch.add(torch.mul(x["decoder_target"],torch.tensor(std)),mean)
         x["encoder_target"] = torch.add(torch.mul(x["encoder_target"],torch.tensor(std)),mean)
         #take the avg raw prediction to culcuate the Errors metrics
@@ -362,7 +362,7 @@ class TestBenchDeepAR:
 def main(test_to_perform):
     tb = TestBenchDeepAR(
         class_to_test=DeepARTester,
-        path_to_data="C:\\Users\\Owner\\AppLearner\\data\\OperatreFirst_PrometheusData_AppLearner\\",
+        path_to_data="../data/",
         tests_to_perform=test_to_perform
     )
     mse,mase,mape = tb.run_training_and_tests()
@@ -375,6 +375,13 @@ def main(test_to_perform):
 ***********************************************************************************************************************
 """
 
-# if __name__ == "__main__":
-    # test_to_perform = []
-    # main(test_to_perform)
+if __name__ == "__main__":
+
+    import os
+    os.environ['PYTORCH_ENABLE_MPS_FALLBACK'] = '1'
+    torch.device('cpu')
+    test_to_perform = [
+        {"metric": 'container_cpu', "app": "collector", "prediction length": 8, "sub sample rate": 30,
+         "data length limit": 128, "batch": 128, "stride": 20, "agg": "avg", "plot": True, "max epochs": 5}
+        ]
+    main(test_to_perform)
