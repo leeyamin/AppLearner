@@ -166,7 +166,7 @@ class PytorchSCITester:
         best_model = train(
             training_data_set=training_data_set,
             model=self.__model,
-            num_epochs=20,
+            num_epochs=2,
             model_input_length=self.__model_input_length,
             model_output_length=self.__model_output_length,
             batch_size=32,

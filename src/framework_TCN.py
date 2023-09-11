@@ -1,10 +1,5 @@
-# imports
-import sys
-import os
 import time
 
-# setting path
-sys.path.append(os.path.abspath('..'))
 import framework__data_set as ds
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -19,7 +14,7 @@ from darts.utils.missing_values import extract_subseries
 
 
 def main():
-    use_pretrained_model = True
+    use_pretrained_model = False  # trained model was trained on gpus, so requires gpus to run
     # get data
     cpu_dataset = ds.get_data_set(
         metric="container_cpu",
@@ -86,12 +81,12 @@ def main():
     )
     if use_pretrained_model:
         # load model
-        model = TCNModel.load("TrainedModels/TCN/Multivariate_TCN_model.pt")
+        model = TCNModel.load("../TrainedModels/TCN/Multivariate_TCN_model.pt")
     else:
         # fit model
         model.fit(series=train_series_lst, past_covariates=None, verbose=True)
         # save model
-        model.save("TrainedModels/TCN/Multivariate_TCN_model_after_HP_tuning.pt")
+        model.save("../TrainedModels/TCN/Multivariate_TCN_model_after_HP_tuning.pt")
     # evaluate model
     model.to_cpu()
     # when plotting, we remove under 500, so lets also remove them from the test set
@@ -103,7 +98,7 @@ def main():
         series=test_series_lst,
         past_covariates=None,
         forecast_horizon=60,
-        stride=3,
+        stride=50,
         verbose=True,
     )
     print("--- Back testing took %s seconds ---" % (time.time() - start_time))
