@@ -4,10 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7c4fca50-34d0-47d0-a400-7bde782bfbb2" name="Changes" comment="Reformat deepar">
+    <list default="true" id="7c4fca50-34d0-47d0-a400-7bde782bfbb2" name="Changes" comment="Add comments">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/framework_TCN.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/framework_TCN.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/framework__scinet.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/framework__scinet.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/dataset/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/dataset/utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -61,14 +61,14 @@
     &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;deepar__checkup&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;darts__package&quot;,
     &quot;last_opened_file_path&quot;: &quot;/home/ayehoshu/AppLearner/src&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;python.debugger.dataview.coloredbydefault&quot;: &quot;false&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;org.jetbrains.plugins.github.ui.GithubSettingsConfigurable&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
@@ -85,7 +85,7 @@
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.framework_TCN">
+  <component name="RunManager" selected="Python.main">
     <configuration default="true" type="PythonConfigurationType" factoryName="Python">
       <module name="AppLearner" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -112,6 +112,9 @@
       <module name="AppLearner" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
       <option name="SDK_HOME" value="" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src" />
       <option name="IS_MODULE_SDK" value="true" />
@@ -141,28 +144,6 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/framework__deepar.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="true" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="framework__scinet" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="AppLearner" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/framework__scinet.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="true" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -215,20 +196,39 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="AppLearner" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/main.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="true" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <list>
+      <item itemvalue="Python.main" />
       <item itemvalue="Python.framework__deepar" />
       <item itemvalue="Python.framework__test_bench_deepar" />
-      <item itemvalue="Python.framework__scinet" />
       <item itemvalue="Python.framework__test_bench_scinet" />
       <item itemvalue="Python.framework_TCN" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.main" />
         <item itemvalue="Python.framework_TCN" />
         <item itemvalue="Python.framework__test_bench_scinet" />
         <item itemvalue="Python.framework__test_bench_deepar" />
         <item itemvalue="Python.framework__deepar" />
-        <item itemvalue="Python.framework__scinet" />
       </list>
     </recent_temporary>
   </component>
@@ -288,6 +288,14 @@
       <workItem from="1694345452860" duration="3869000" />
       <workItem from="1694350285817" duration="13058000" />
       <workItem from="1694427384881" duration="1468000" />
+      <workItem from="1694609046485" duration="31000" />
+      <workItem from="1694609081238" duration="113000" />
+      <workItem from="1694609349905" duration="1345000" />
+      <workItem from="1694615163686" duration="630000" />
+      <workItem from="1694641839414" duration="652000" />
+      <workItem from="1694683283791" duration="4620000" />
+      <workItem from="1696151836505" duration="21475000" />
+      <workItem from="1696319355716" duration="6533000" />
     </task>
     <task id="LOCAL-00001" summary="Adding LSTM model">
       <created>1679245750742</created>
@@ -511,7 +519,8 @@
     <MESSAGE value="Edit trained model path" />
     <MESSAGE value="Run deepar" />
     <MESSAGE value="Reformat deepar" />
-    <option name="LAST_COMMIT_MESSAGE" value="Reformat deepar" />
+    <MESSAGE value="Add comments" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add comments" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -591,6 +600,21 @@
           <line>114</line>
           <option name="timeStamp" value="168" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/main.py</url>
+          <line>70</line>
+          <option name="timeStamp" value="182" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/main.py</url>
+          <line>74</line>
+          <option name="timeStamp" value="186" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/main.py</url>
+          <line>66</line>
+          <option name="timeStamp" value="189" />
+        </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
         <breakpoint type="python-exception">
@@ -608,13 +632,13 @@
     <SUITE FILE_PATH="coverage/AppLearner$framework__LSTM_Keras.coverage" NAME="framework__LSTM_Keras Coverage Results" MODIFIED="1691060121704" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/AppLearner$train_and_validate.coverage" NAME="train_and_validate Coverage Results" MODIFIED="1693501120562" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/models" />
     <SUITE FILE_PATH="coverage/AppLearner$app_predict.coverage" NAME="app_predict Coverage Results" MODIFIED="1679229861146" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Adi_LSTM" />
-    <SUITE FILE_PATH="coverage/AppLearner$main.coverage" NAME="main Coverage Results" MODIFIED="1693744831861" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
+    <SUITE FILE_PATH="coverage/AppLearner$main.coverage" NAME="main Coverage Results" MODIFIED="1696325699155" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/AppLearner$app_training__1_.coverage" NAME="app_training (1) Coverage Results" MODIFIED="1678701767917" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Jesus_LSTM" />
     <SUITE FILE_PATH="coverage/AppLearner$app_training.coverage" NAME="app_training Coverage Results" MODIFIED="1683548695973" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Adi_LSTM" />
     <SUITE FILE_PATH="coverage/AppLearner$app_predict__1_.coverage" NAME="app_predict (1) Coverage Results" MODIFIED="1678796179291" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Adi_LSTM" />
     <SUITE FILE_PATH="coverage/AppLearner$app_testing__1_.coverage" NAME="app_testing (1) Coverage Results" MODIFIED="1678262088550" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Jesus_LSTM" />
     <SUITE FILE_PATH="coverage/AppLearner$framework__test_bench_scinet.coverage" NAME="framework__test_bench_scinet Coverage Results" MODIFIED="1693815440758" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
-    <SUITE FILE_PATH="coverage/AppLearner$framework_TCN.coverage" NAME="framework_TCN Coverage Results" MODIFIED="1693919395673" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
+    <SUITE FILE_PATH="coverage/AppLearner$framework_TCN.coverage" NAME="framework_TCN Coverage Results" MODIFIED="1694523692618" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/AppLearner$Extractor.coverage" NAME="Extractor Coverage Results" MODIFIED="1676806253379" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/AppLearner$framework__LSTM_PyTorch.coverage" NAME="framework__LSTM_PyTorch Coverage Results" MODIFIED="1690126383499" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/AppLearner$Data_extractor.coverage" NAME="Data_extractor Coverage Results" MODIFIED="1678979316249" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
