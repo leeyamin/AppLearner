@@ -2,6 +2,8 @@ import random
 import numpy as np
 import torch
 
+from src.models import TCNModel
+
 
 def seed_everything(seed=42):
     random.seed(seed)
