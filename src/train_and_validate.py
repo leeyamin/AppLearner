@@ -1,10 +1,8 @@
-import numpy as np
 import matplotlib.pyplot as plt
 from tabulate import tabulate
 import darts
 from darts.metrics import mae, mape, mse, rmse
 
-import src.dataset.utils as dataset_utils
 import src.config as config
 
 
@@ -12,11 +10,13 @@ def format_number(number):
     return f"{number:.4f}"
 
 
-def train_one_epoch(epoch_idx, model, train_dfs, scaler):
+def train_one_epoch(epoch_idx, model, data):
     epoch_train_maes = []
     epoch_train_mapes = []
     epoch_train_mses = []
     epoch_train_rmses = []
+
+    train_dfs = data.get_train_time_series_data()
 
     # train on each df (one epoch = one pass through all dfs)
     for df_idx in train_dfs['source_df_idx'].unique():
@@ -30,18 +30,12 @@ def train_one_epoch(epoch_idx, model, train_dfs, scaler):
         train_forecast = model.predict(n=len(darts_train_dataset) - config.look_back,
                                        series=darts_train_dataset[:config.look_back])
 
-        train_forecast.values = (
-            dataset_utils.re_transform_and_re_scale_data(darts_values=train_forecast.values(),
-                                                         transformation_method=config.transformation_method,
-                                                         scale_method=config.scale_method,
-                                                         scaler=scaler)
-        )
-        darts_train_dataset.values = (
-            dataset_utils.re_transform_and_re_scale_data(darts_values=darts_train_dataset.values(),
-                                                         transformation_method=config.transformation_method,
-                                                         scale_method=config.scale_method,
-                                                         scaler=scaler)
-        )
+        train_forecast.values = data.re_transform_and_re_scale_data(darts_values=train_forecast.values(),
+                                                                    transformation_method=config.transformation_method,
+                                                                    scale_method=config.scale_method)
+        darts_train_dataset.values = data.re_transform_and_re_scale_data(darts_values=darts_train_dataset.values(),
+                                                                         transformation_method=config.transformation_method,
+                                                                         scale_method=config.scale_method)
 
         assert len(darts_train_dataset[config.look_back:]) == len(train_forecast)
         train_mae = mae(darts_train_dataset[config.look_back:], train_forecast)
@@ -85,11 +79,13 @@ def train_one_epoch(epoch_idx, model, train_dfs, scaler):
     return epoch_train_metrics_dict
 
 
-def validate_one_epoch(epoch_idx, model, val_dfs, scaler):
+def validate_one_epoch(epoch_idx, model, data):
     epoch_val_maes = []
     epoch_val_mapes = []
     epoch_val_mses = []
     epoch_val_rmses = []
+
+    val_dfs = data.get_val_time_series_data()
 
     for df_idx in val_dfs['source_df_idx'].unique():
         val_df_dataset = val_dfs[val_dfs['source_df_idx'] == df_idx]
@@ -101,19 +97,13 @@ def validate_one_epoch(epoch_idx, model, val_dfs, scaler):
         val_forecast = model.predict(n=len(darts_val_dataset) - config.look_back,
                                      series=darts_val_dataset[:config.look_back])
 
-        val_forecast.values = (
-            dataset_utils.re_transform_and_re_scale_data(darts_values=val_forecast.values(),
-                                                         transformation_method=config.transformation_method,
-                                                         scale_method=config.scale_method,
-                                                         scaler=scaler)
-        )
+        val_forecast.values = data.re_transform_and_re_scale_data(darts_values=val_forecast.values(),
+                                                                  transformation_method=config.transformation_method,
+                                                                  scale_method=config.scale_method)
 
-        darts_val_dataset.values = (
-            dataset_utils.re_transform_and_re_scale_data(darts_values=darts_val_dataset.values(),
-                                                         transformation_method=config.transformation_method,
-                                                         scale_method=config.scale_method,
-                                                         scaler=scaler)
-        )
+        darts_val_dataset.values = data.re_transform_and_re_scale_data(darts_values=darts_val_dataset.values(),
+                                                                       transformation_method=config.transformation_method,
+                                                                       scale_method=config.scale_method)
 
         assert len(darts_val_dataset[config.look_back:]) == len(val_forecast)
         val_mae = mae(darts_val_dataset[config.look_back:], val_forecast)
@@ -178,14 +168,14 @@ def plot_metrics(total_epochs_train_metrics_dict, total_epochs_val_metrics_dict,
     plt.close()
 
 
-def train_and_validate(model, train_dfs, val_dfs, scaler):
+def train_and_validate(model, data):
     total_epochs_train_metrics_dict = {}
     total_epochs_val_metrics_dict = {}
     for epoch_idx in range(config.num_epochs):
         print(f"Epoch {epoch_idx + 1}/{config.num_epochs}")
 
-        epoch_train_metrics_dict = train_one_epoch(epoch_idx, model, train_dfs, scaler)
-        epoch_val_metrics_dict = validate_one_epoch(epoch_idx, model, val_dfs, scaler)
+        epoch_train_metrics_dict = train_one_epoch(epoch_idx, model, data)
+        epoch_val_metrics_dict = validate_one_epoch(epoch_idx, model, data)
 
         print_metrics_in_table(epoch_idx, epoch_train_metrics_dict, epoch_val_metrics_dict)
 

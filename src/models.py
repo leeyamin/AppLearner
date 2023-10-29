@@ -54,7 +54,8 @@ def get_model(model_name):
             RNNModel(
                 model='LSTM',
                 input_chunk_length=config.look_back,
-                output_chunk_length=config.horizon,
+                # TODO: check how to configure horizon
+                # output_chunk_length=1,  # rnn outputs a single value at each step
                 n_epochs=1,  # default: 100
                 model_name="DeepAR",
                 log_tensorboard=True,

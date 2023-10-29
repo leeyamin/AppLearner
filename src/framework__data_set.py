@@ -1,9 +1,3 @@
-"""
-***********************************************************************************************************************
-    imports
-***********************************************************************************************************************
-"""
-
 import json
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -13,31 +7,22 @@ from os import listdir
 from os.path import isfile, join
 import numpy as np
 from copy import deepcopy
+from sklearn.preprocessing import MinMaxScaler
 
-"""
-***********************************************************************************************************************
-    TimeSeriesDataSet Class
-***********************************************************************************************************************
-"""
+import src.config as config
 
 
 class TimeSeriesDataSet:
-    """
-    Class that houses time series data set.
-    """
-
     def __init__(self, list_of_df):
         self.list_of_df = list_of_df
         self.__is_data_scaled = False
         self.__mean = None
         self.__std = None
         self.dfs_concatenated = None
-
-    """
-    *******************************************************************************************************************
-        Helper functions
-    *******************************************************************************************************************
-    """
+        self.time_series_data = None
+        self.train_time_series_data = None
+        self.val_time_series_data = None
+        self.scaler = None
 
     def get_list(self):
         return self.list_of_df
@@ -56,12 +41,6 @@ class TimeSeriesDataSet:
     def __set_mean_and_std(self, mean, std):
         self.__mean = mean
         self.__std = std
-
-    """
-    *******************************************************************************************************************
-        API functions
-    *******************************************************************************************************************
-    """
 
     def __getitem__(self, key):
         return self.list_of_df[key]
@@ -233,7 +212,7 @@ class TimeSeriesDataSet:
             standardized_sample_column = (df["sample"] - self.__mean) / self.__std
             # print("sample", df["sample"] , standardized_sample_column)
             df["sample"] = standardized_sample_column
-    
+
     def deepAR_scale_data(self):
         """
         rescaling the distribution of values so that the mean of observed values is 0, and the std is 1.
@@ -275,20 +254,37 @@ class TimeSeriesDataSet:
         assert max(len(df) for df in train) == (max(len(df) for df in test) - length_to_predict)
         return train, test
 
-    def split_to_train_and_test_Lee(self, train_ratio=0.8):
+    def get_train_time_series_data(self):
+        return self.train_time_series_data
+
+    def get_val_time_series_data(self):
+        return self.val_time_series_data
+
+    def set_train_time_series_data_samples(self, train_time_series_data):
+        self.train_time_series_data['sample'] = train_time_series_data.squeeze()
+
+    def set_val_time_series_data_samples(self, val_time_series_data):
+        self.val_time_series_data['sample'] = val_time_series_data.squeeze()
+
+    def split_to_train_and_test_Lee(self):
         """
         Split the data into train and test sets according to a specified train ratio.
-        The splitting is made upon the dataframes, and not the samples.
+        The splitting is made upon the shuffled dataframes, and not the samples.
         """
-        random.shuffle(self.list_of_df)
-        test_df_index = int(len(self.list_of_df) * train_ratio)
-        train = TimeSeriesDataSet(list_of_df=self.list_of_df[:test_df_index])
-        test = TimeSeriesDataSet(list_of_df=self.list_of_df[test_df_index:])
-        mean_train, std_train = train.__get_mean_and_std()
-        train.__set_mean_and_std(mean_train, std_train)
-        test.__set_mean_and_std(mean_train, std_train)
+        num_dfs = len(self.time_series_data['source_df_idx'].unique())
+        num_dfs_train = int(num_dfs * config.train_ratio)
 
-        return train, test
+        # shuffle between dfs indices (not within dfs)
+        unique_indices = self.time_series_data['source_df_idx'].unique()
+        np.random.shuffle(unique_indices)
+        train_indices = unique_indices[:num_dfs_train]
+        val_indices = unique_indices[num_dfs_train:]
+
+        train_data = self.time_series_data[self.time_series_data['source_df_idx'].isin(train_indices)].copy()
+        val_data = self.time_series_data[self.time_series_data['source_df_idx'].isin(val_indices)].copy()
+
+        self.train_time_series_data = train_data
+        self.val_time_series_data = val_data
 
     def prepare_dataset_for_time_series(self, look_back, horizon):
         """
@@ -323,12 +319,106 @@ class TimeSeriesDataSet:
         split_dfs = []
 
         for idx in self.dfs_concatenated['source_df_idx'].unique():
-            split_dfs.append(self.dfs_concatenated[self.dfs_concatenated['source_df_idx'] == idx].drop('source_df_idx', axis=1))
+            split_dfs.append(
+                self.dfs_concatenated[self.dfs_concatenated['source_df_idx'] == idx].drop('source_df_idx', axis=1))
         for df in self.list_of_df:
             df.drop('source_df_idx', axis=1, inplace=True)
 
         for idx in range(0, len(self.list_of_df)):
             assert self.list_of_df[idx].equals(split_dfs[idx])
+
+    def set_time_series_data(self):
+        self.time_series_data = self.dfs_concatenated[['sample', 'time', 'source_df_idx']]
+
+    def get_time_series_data(self):
+        return self.time_series_data
+
+    def prepare_data_for_run(self):
+        import src.config as config
+        print(f"Throwing out data that is less than {config.data_length_limit_in_minutes / 60} hours long.")
+        self.filter_data_that_is_too_short(data_length_limit=config.data_length_limit_in_minutes)
+
+        print(f"Subsampling data from 1 sample per 1 minute to 1 sample per {config.sub_sample_rate} minutes.")
+        self.sub_sample_data(sub_sample_rate=config.sub_sample_rate, aggregation_type=config.aggregation_type)
+
+        self.record_df_indices()
+        self.concatenate_dfs()
+
+        self.set_time_series_data()
+
+    def transform_data(self, transformation_method='log'):
+        """
+        Transform the data using the specified method. Currently only supports log transformation.
+        """
+        if transformation_method == 'log':
+            epsilon = 1e-8
+            self.set_train_time_series_data_samples(np.log(self.train_time_series_data['sample'] + epsilon))
+            self.set_val_time_series_data_samples(np.log(self.val_time_series_data['sample'] + epsilon))
+        else:
+            raise NotImplementedError
+
+    def scale_data(self, scale_method='min-max'):
+        """
+        Scale the data using the specified method. Currently only supports min-max scaling.
+        """
+        if scale_method == 'min-max':
+            if self.scaler is None:
+                self.scaler = MinMaxScaler()
+                self.scaler.fit(self.train_time_series_data['sample'].values.reshape(-1, 1))
+
+            scaled_train_samples = self.scaler.transform(self.train_time_series_data['sample'].values.reshape(-1, 1))
+            scaled_val_samples = self.scaler.transform(self.val_time_series_data['sample'].values.reshape(-1, 1))
+
+            self.set_train_time_series_data_samples(scaled_train_samples)
+            self.set_val_time_series_data_samples(scaled_val_samples)
+        else:
+            raise NotImplementedError
+
+    def transform_and_scale_data(self, transformation_method: str = 'log', scale_method: str = 'min-max'):
+        """
+        Transform and scale the data using the specified methods. Currently only supports log transformation and min-max
+        scaling.
+        """
+        if transformation_method is None and scale_method is None:
+            return
+        if transformation_method is not None:
+            self.transform_data(transformation_method=transformation_method)
+        if scale_method is not None:
+            self.scale_data(scale_method=scale_method)
+
+    def re_scale_data(self, darts_values, scale_method):
+        """
+        Rescale the data. Currently only supports min-max re-scaling.
+        """
+        if scale_method == 'min-max':
+            re_scaled_darts_values = self.scaler.inverse_transform(darts_values)
+        else:
+            raise NotImplementedError
+        return re_scaled_darts_values
+
+    @staticmethod
+    def re_transform_data(darts_values, transformation_method='log'):
+        """
+        Reverse transforms the data using the specified method. Currently only supports log transformation.
+        """
+        if transformation_method == 'log':
+            re_transformed_darts_values = np.exp(darts_values)
+        else:
+            raise NotImplementedError
+        return re_transformed_darts_values
+
+    def re_transform_and_re_scale_data(self, darts_values, transformation_method, scale_method):
+        """
+        Reverse transforms and scales the data using the specified methods. Currently only supports log transformation and min-max
+        scaling.
+        """
+        if transformation_method is None and scale_method is None:
+            return
+        if scale_method is not None:
+            darts_values = self.re_scale_data(darts_values, scale_method)
+        if transformation_method is not None:
+            darts_values = self.re_transform_data(darts_values, transformation_method=transformation_method)
+        return darts_values
 
 
 """
