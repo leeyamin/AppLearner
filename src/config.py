@@ -19,10 +19,11 @@ model_name = 'DeepAR'
 hidden_size = 4
 num_stacked_layers = 1
 learning_rate = 0.0001
-num_epochs = 2
+num_epochs = 4
 # TODO: determine the loss function
 loss_function = nn.L1Loss(reduction='sum')
 batch_size = 16
+evaluation_metrics = ["mae", "mape", "mse", "rmse"]
 
 transformation_method = 'log'
 scale_method = 'min-max'

@@ -4,8 +4,8 @@ from darts.utils.likelihood_models import GaussianLikelihood
 import src.config as config
 
 
-def get_model(model_name):
-    if model_name == "TCN":
+def get_model():
+    if config.model_name == "TCN":
         # TODO: define hyper parameters from config
         model = (
             TCNModel(
@@ -30,7 +30,7 @@ def get_model(model_name):
 
     # TODO: define hyper parameters from config
     # TODO: configure the plot according to the model (quantiles)
-    elif model_name == "NBEATS":
+    elif config.model_name == "NBEATS":
         model = (
             NBEATSModel(
                 input_chunk_length=config.look_back,
@@ -49,7 +49,7 @@ def get_model(model_name):
             ))
     # TODO: define hyper parameters from config
     # TODO: validate the model configuration is deepar
-    elif model_name == "DeepAR":
+    elif config.model_name == "DeepAR":
         model = (
             RNNModel(
                 model='LSTM',

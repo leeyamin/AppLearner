@@ -24,7 +24,7 @@ if __name__ == '__main__':
     data.split_to_train_and_test_Lee()
     data.transform_and_scale_data()
 
-    model = models.get_model(model_name=config.model_name)
-    model.log_every_n_steps = 1  # handles a warning. TODO: check this solution
+    model = models.get_model()
+    model.log_every_n_steps = 1  # handles a warning
 
     train_and_validate.train_and_validate(model, data)

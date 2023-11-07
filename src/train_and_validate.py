@@ -10,6 +10,20 @@ def format_number(number):
     return f"{number:.4f}"
 
 
+def plot_forecast_vs_actual(epoch_idx, forecast_data, actual_data, df_idx, df_metrics_dict):
+    forecast_data.plot(label='Forecast', color='blue', alpha=0.5)
+    actual_data.plot(label='Actual', color='black')
+    plt.legend()
+    plt.title(f'({config.model_name}) Epoch ({epoch_idx}) Train Forecasting (df={df_idx}):\n '
+              f'MAE = {df_metrics_dict["mae"]:.4f}'
+              f' MAPE = {df_metrics_dict["mape"]:.4f}'
+              f' MSE = {df_metrics_dict["mse"]:.4f}'
+              f' RMSE = {df_metrics_dict["rmse"]:.4f}'
+              )
+    plt.show()
+    plt.close()
+
+
 def train_one_epoch(epoch_idx, model, data):
     epoch_train_maes = []
     epoch_train_mapes = []
@@ -55,19 +69,9 @@ def train_one_epoch(epoch_idx, model, data):
             "rmse": train_rmse
         }
 
-        # plot every 500th df (TODO: create a plot function)
+        # plot every 500th df
         if df_idx % 500 == 0:
-            train_forecast.plot(label='Forecast', color='blue', alpha=0.5)
-            darts_train_dataset.plot(label='Actual', color='black')
-            plt.legend()
-            plt.title(f'({config.model_name}) Epoch ({epoch_idx}) Train Forecasting (df={df_idx}):\n '
-                      f'MAE = {train_df_metrics_dict["mae"]:.4f}'
-                      f' MAPE = {train_df_metrics_dict["mape"]:.4f}'
-                      f' MSE = {train_df_metrics_dict["mse"]:.4f}'
-                      f' RMSE = {train_df_metrics_dict["rmse"]:.4f}'
-                      )
-            plt.show()
-            plt.close()
+            plot_forecast_vs_actual(epoch_idx, train_forecast, darts_train_dataset, df_idx, train_df_metrics_dict)
 
     epoch_train_metrics_dict = {
         "mae": format_number(sum(epoch_train_maes) / len(epoch_train_maes)),
@@ -116,18 +120,15 @@ def validate_one_epoch(epoch_idx, model, data):
         epoch_val_mses.append(val_mse)
         epoch_val_rmses.append(val_rmse)
 
+        val_df_metrics_dict = {
+            "mae": val_mae,
+            "mape": val_mape,
+            "mse": val_mse,
+            "rmse": val_rmse
+        }
+
         if df_idx % 200 == 0:
-            val_forecast.plot(label='Forecast', color='blue')
-            darts_val_dataset.plot(label='Actual', color='black')
-            plt.legend()
-            plt.title(f'({config.model_name}) Epoch ({epoch_idx}) Validation Forecasting (df={df_idx}):\n '
-                      f'MAE = {val_mae:.4f}'
-                      f' MAPE = {val_mape:.4f}'
-                      f' MSE = {val_mse:.4f}'
-                      f' RMSE = {val_rmse:.4f}'
-                      )
-            plt.show()
-            plt.close()
+            plot_forecast_vs_actual(epoch_idx, val_forecast, darts_val_dataset, df_idx, val_df_metrics_dict)
 
     epoch_val_metrics_dict = {
         "mae": format_number(sum(epoch_val_maes) / len(epoch_val_maes)),
@@ -155,22 +156,24 @@ def print_metrics_in_table(epoch_idx, epoch_train_metrics_dict, epoch_val_metric
     print(tabulate(results_data, headers=headers, tablefmt="pretty"))
 
 
-def plot_metrics(total_epochs_train_metrics_dict, total_epochs_val_metrics_dict, metric_name):
-    train_values = [float(metrics[metric_name]) for metrics in total_epochs_train_metrics_dict.values()]
-    val_values = [float(metrics[metric_name]) for metrics in total_epochs_val_metrics_dict.values()]
+def plot_metrics(total_epochs_train_metrics_dict, total_epochs_val_metrics_dict):
+    for metric in config.evaluation_metrics:
+        train_values = [float(epoch_metrics[metric]) for epoch_metrics in total_epochs_train_metrics_dict.values()]
+        val_values = [float(epoch_metrics[metric]) for epoch_metrics in total_epochs_val_metrics_dict.values()]
 
-    plt.plot(train_values, color='blue', label='train')
-    plt.plot(val_values, color='orange', label='val')
-    plt.xticks(range(len(train_values)))
-    plt.title(f'({config.model_name}) {metric_name.upper()}')
-    plt.legend()
-    plt.show()
-    plt.close()
+        plt.plot(train_values, color='blue', label='train')
+        plt.plot(val_values, color='orange', label='val')
+        plt.xticks(range(len(train_values)))
+        plt.title(f'({config.model_name}) {metric.upper()}')
+        plt.legend()
+        plt.show()
+        plt.close()
 
 
 def train_and_validate(model, data):
     total_epochs_train_metrics_dict = {}
     total_epochs_val_metrics_dict = {}
+    # TODO: consider config as input or other form of configuration
     for epoch_idx in range(config.num_epochs):
         print(f"Epoch {epoch_idx + 1}/{config.num_epochs}")
 
@@ -182,8 +185,4 @@ def train_and_validate(model, data):
         total_epochs_train_metrics_dict[epoch_idx] = epoch_train_metrics_dict
         total_epochs_val_metrics_dict[epoch_idx] = epoch_val_metrics_dict
 
-    # TODO: define the metrics in config
-    metrics_to_plot = ["mae", "mape", "mse", "rmse"]
-
-    for metric in metrics_to_plot:
-        plot_metrics(total_epochs_train_metrics_dict, total_epochs_val_metrics_dict, metric)
+    plot_metrics(total_epochs_train_metrics_dict, total_epochs_val_metrics_dict)
