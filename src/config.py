@@ -1,29 +1,34 @@
-import torch
-import torch.nn as nn
+import argparse
 
-cuda_available = 0
-device = torch.device(f"cuda:{cuda_available}" if torch.cuda.is_available() else "cpu")
+parser = argparse.ArgumentParser()
 
-metric = 'container_cpu'
-application_name = 'collector'
+# TODO: configure in model cuda device
+parser.add_argument('--cuda_available', type=int, default=0, help='CUDA device index')
 
-sub_sample_rate = 1
-aggregation_type = 'max'
-data_length_limit_in_minutes = 60
-train_ratio = 0.8
+parser.add_argument('--metric', type=str, default='container_cpu', help='metric type')
+parser.add_argument('--application_name', type=str, default='collector', help='application name')
 
-look_back = 12
-horizon = 2
+parser.add_argument('--sub_sample_rate', type=int, default=1, help='sub-sample rate')
+parser.add_argument('--aggregation_type', type=str, default='max', help='aggregation type')
+parser.add_argument('--data_length_limit_in_minutes', type=int, default=60,
+                    help='data length limit in minutes')
+parser.add_argument('--train_ratio', type=float, default=0.8, help='training data ratio')
+parser.add_argument('--transformation_method', type=str, default='log', help='transformation method')
+parser.add_argument('--scale_method', type=str, default='min-max', help='scaling method')
 
-model_name = 'DeepAR'
-hidden_size = 4
-num_stacked_layers = 1
-learning_rate = 0.0001
-num_epochs = 4
-# TODO: determine the loss function
-loss_function = nn.L1Loss(reduction='sum')
-batch_size = 16
-evaluation_metrics = ["mae", "mape", "mse", "rmse"]
+parser.add_argument('--look_back', type=int, default=12, help='look back window size')
+parser.add_argument('--horizon', type=int, default=2, help='prediction horizon')
+parser.add_argument('--model_name', type=str, default='TCN', help='model name')
+parser.add_argument('--trained_model_path', type=str, default=None, help='path to a pre-trained model')
 
-transformation_method = 'log'
-scale_method = 'min-max'
+parser.add_argument('--num_epochs', type=int, default=2, help='number of epochs')
+parser.add_argument('--batch_size', type=int, default=16, help='batch size')
+parser.add_argument('--learning_rate', type=float, default=0.0001, help='learning rate')
+parser.add_argument('--loss_function', type=str, default='L1Loss', help='loss function type')
+
+parser.add_argument('--evaluation_metrics', default=["mae", "mape", "mse", "rmse"],
+                    help='evaluation metrics')
+
+parser.add_argument('--output_path', type=str, default=None, help='output path')
+
+config = parser.parse_args()

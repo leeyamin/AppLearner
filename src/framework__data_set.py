@@ -9,7 +9,8 @@ import numpy as np
 from copy import deepcopy
 from sklearn.preprocessing import MinMaxScaler
 
-import src.config as config
+from src.config import config
+import src.utils as utils
 
 
 class TimeSeriesDataSet:
@@ -334,11 +335,13 @@ class TimeSeriesDataSet:
         return self.time_series_data
 
     def prepare_data_for_run(self):
-        import src.config as config
-        print(f"Throwing out data that is less than {config.data_length_limit_in_minutes / 60} hours long.")
+        msg = f"Throwing out data that is less than {config.data_length_limit_in_minutes / 60} hours long."
+        print(msg)
+        utils.record_logs_to_txt(msg)
         self.filter_data_that_is_too_short(data_length_limit=config.data_length_limit_in_minutes)
-
-        print(f"Subsampling data from 1 sample per 1 minute to 1 sample per {config.sub_sample_rate} minutes.")
+        msg = f"Subsampling data from 1 sample per 1 minute to 1 sample per {config.sub_sample_rate} minutes."
+        print(msg)
+        utils.record_logs_to_txt(msg)
         self.sub_sample_data(sub_sample_rate=config.sub_sample_rate, aggregation_type=config.aggregation_type)
 
         self.record_df_indices()

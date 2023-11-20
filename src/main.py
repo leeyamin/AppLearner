@@ -1,7 +1,6 @@
 import src.framework__data_set as framework__data_set
 import src.utils as utils
-import src.config as config
-import src.models as models
+from src.config import config
 import src.train_and_validate as train_and_validate
 
 import warnings
@@ -10,6 +9,8 @@ warnings.filterwarnings("ignore", category=UserWarning, message="MPS available b
 
 if __name__ == '__main__':
     utils.seed_everything()
+    config.output_path = utils.get_output_path()
+    utils.record_config(config)
 
     data = framework__data_set.get_data_set(
         metric=config.metric,
@@ -24,7 +25,10 @@ if __name__ == '__main__':
     data.split_to_train_and_test_Lee()
     data.transform_and_scale_data()
 
-    model = models.get_model()
+    model = utils.get_model()
     model.log_every_n_steps = 1  # handles a warning
 
-    train_and_validate.train_and_validate(model, data)
+    model = utils.load_model_if_exists(model)
+    model = train_and_validate.train_and_validate(model, data)
+
+    utils.save_model(model, model_name='model_last')

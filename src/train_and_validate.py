@@ -2,25 +2,36 @@ import matplotlib.pyplot as plt
 from tabulate import tabulate
 import darts
 from darts.metrics import mae, mape, mse, rmse
+from torch.utils.tensorboard import SummaryWriter
 
-import src.config as config
+from src.config import config
+import src.utils as utils
 
 
 def format_number(number):
     return f"{number:.4f}"
 
 
-def plot_forecast_vs_actual(epoch_idx, forecast_data, actual_data, df_idx, df_metrics_dict):
+def plot_forecast_vs_actual(epoch_idx, forecast_data, actual_data, df_idx, df_metrics_dict, is_train):
+    mode = "train" if is_train else "val"
+    main_output_path = f"{config.output_path}/forecast_vs_actual/{mode}"
+    df_idx_output_path = f"{main_output_path}/{df_idx}/"
+    import os
+    if not os.path.exists(df_idx_output_path):
+        os.makedirs(df_idx_output_path)
+
+    plt.figure(figsize=(20, 10))
+
     forecast_data.plot(label='Forecast', color='blue', alpha=0.5)
     actual_data.plot(label='Actual', color='black')
     plt.legend()
-    plt.title(f'({config.model_name}) Epoch ({epoch_idx}) Train Forecasting (df={df_idx}):\n '
+    plt.title(f'({config.model_name}) Epoch ({epoch_idx}) {mode} Forecasting (df={df_idx}):\n '
               f'MAE = {df_metrics_dict["mae"]:.4f}'
               f' MAPE = {df_metrics_dict["mape"]:.4f}'
               f' MSE = {df_metrics_dict["mse"]:.4f}'
               f' RMSE = {df_metrics_dict["rmse"]:.4f}'
               )
-    plt.show()
+    plt.savefig(f"{df_idx_output_path}/{epoch_idx}.png")
     plt.close()
 
 
@@ -69,15 +80,14 @@ def train_one_epoch(epoch_idx, model, data):
             "rmse": train_rmse
         }
 
-        # plot every 500th df
-        if df_idx % 500 == 0:
-            plot_forecast_vs_actual(epoch_idx, train_forecast, darts_train_dataset, df_idx, train_df_metrics_dict)
+        plot_forecast_vs_actual(epoch_idx, train_forecast, darts_train_dataset, df_idx, train_df_metrics_dict,
+                                is_train=True)
 
     epoch_train_metrics_dict = {
-        "mae": format_number(sum(epoch_train_maes) / len(epoch_train_maes)),
-        "mape": format_number(sum(epoch_train_mapes) / len(epoch_train_mapes)),
-        "mse": format_number(sum(epoch_train_mses) / len(epoch_train_mses)),
-        "rmse": format_number(sum(epoch_train_rmses) / len(epoch_train_rmses))
+        "mae": sum(epoch_train_maes) / len(epoch_train_maes),
+        "mape": sum(epoch_train_mapes) / len(epoch_train_mapes),
+        "mse": sum(epoch_train_mses) / len(epoch_train_mses),
+        "rmse": sum(epoch_train_rmses) / len(epoch_train_rmses)
     }
 
     return epoch_train_metrics_dict
@@ -127,17 +137,27 @@ def validate_one_epoch(epoch_idx, model, data):
             "rmse": val_rmse
         }
 
-        if df_idx % 200 == 0:
-            plot_forecast_vs_actual(epoch_idx, val_forecast, darts_val_dataset, df_idx, val_df_metrics_dict)
+        plot_forecast_vs_actual(epoch_idx, val_forecast, darts_val_dataset, df_idx, val_df_metrics_dict,
+                                is_train=False)
 
     epoch_val_metrics_dict = {
-        "mae": format_number(sum(epoch_val_maes) / len(epoch_val_maes)),
-        "mape": format_number(sum(epoch_val_mapes) / len(epoch_val_mapes)),
-        "mse": format_number(sum(epoch_val_mses) / len(epoch_val_mses)),
-        "rmse": format_number(sum(epoch_val_rmses) / len(epoch_val_rmses))
+        "mae": sum(epoch_val_maes) / len(epoch_val_maes),
+        "mape": sum(epoch_val_mapes) / len(epoch_val_mapes),
+        "mse": sum(epoch_val_mses) / len(epoch_val_mses),
+        "rmse": sum(epoch_val_rmses) / len(epoch_val_rmses)
     }
 
     return epoch_val_metrics_dict
+
+
+def write_metrics_to_tensorboard(epoch_idx, epoch_train_metrics_dict, epoch_val_metrics_dict,
+                                 train_writer, val_writer):
+    for metric in config.evaluation_metrics:
+        train_writer.add_scalar(metric, epoch_train_metrics_dict[metric], epoch_idx)
+        val_writer.add_scalar(metric, epoch_val_metrics_dict[metric], epoch_idx)
+
+    train_writer.close()
+    val_writer.close()
 
 
 def print_metrics_in_table(epoch_idx, epoch_train_metrics_dict, epoch_val_metrics_dict):
@@ -145,15 +165,23 @@ def print_metrics_in_table(epoch_idx, epoch_train_metrics_dict, epoch_val_metric
     Prints the metrics in a table.
     """
     results_data = [
-        ["Train", epoch_train_metrics_dict["mae"], epoch_train_metrics_dict["mape"], epoch_train_metrics_dict["mse"],
-         epoch_train_metrics_dict["rmse"]],
-        ["Validation", epoch_val_metrics_dict["mae"], epoch_val_metrics_dict["mape"], epoch_val_metrics_dict["mse"],
-         epoch_val_metrics_dict["rmse"]]
+        ["Train",
+         format_number(epoch_train_metrics_dict["mae"]),
+         format_number(epoch_train_metrics_dict["mape"]),
+         format_number(epoch_train_metrics_dict["mse"]),
+         format_number(epoch_train_metrics_dict["rmse"])],
+        ["Validation",
+         format_number(epoch_val_metrics_dict["mae"]),
+         format_number(epoch_val_metrics_dict["mape"]),
+         format_number(epoch_val_metrics_dict["mse"]),
+         format_number(epoch_val_metrics_dict["rmse"])]
     ]
     headers = ["Data", "avg MAE", "avg MAPE", "avg MSE", "avg RMSE"]
 
     print(f"Epoch {epoch_idx + 1}/{config.num_epochs} Results:")
     print(tabulate(results_data, headers=headers, tablefmt="pretty"))
+    utils.record_logs_to_txt(f"Epoch {epoch_idx + 1}/{config.num_epochs} Results:")
+    utils.record_logs_to_txt(tabulate(results_data, headers=headers, tablefmt="pretty"))
 
 
 def plot_metrics(total_epochs_train_metrics_dict, total_epochs_val_metrics_dict):
@@ -173,12 +201,24 @@ def plot_metrics(total_epochs_train_metrics_dict, total_epochs_val_metrics_dict)
 def train_and_validate(model, data):
     total_epochs_train_metrics_dict = {}
     total_epochs_val_metrics_dict = {}
-    # TODO: consider config as input or other form of configuration
+    val_mae_min = float('inf')
     for epoch_idx in range(config.num_epochs):
         print(f"Epoch {epoch_idx + 1}/{config.num_epochs}")
 
+        train_writer = SummaryWriter(log_dir=f'{config.output_path}/tensorboard/train')
+        val_writer = SummaryWriter(log_dir=f'{config.output_path}/tensorboard/val')
+
         epoch_train_metrics_dict = train_one_epoch(epoch_idx, model, data)
         epoch_val_metrics_dict = validate_one_epoch(epoch_idx, model, data)
+
+        # save best model based on validation mae
+        epoch_val_mae = epoch_val_metrics_dict["mae"]
+        if epoch_val_mae < val_mae_min:
+            val_mae_min = epoch_val_mae
+            utils.save_model(model, model_name='model_best')
+
+        write_metrics_to_tensorboard(epoch_idx, epoch_train_metrics_dict, epoch_val_metrics_dict,
+                                     train_writer, val_writer)
 
         print_metrics_in_table(epoch_idx, epoch_train_metrics_dict, epoch_val_metrics_dict)
 
@@ -186,3 +226,5 @@ def train_and_validate(model, data):
         total_epochs_val_metrics_dict[epoch_idx] = epoch_val_metrics_dict
 
     plot_metrics(total_epochs_train_metrics_dict, total_epochs_val_metrics_dict)
+
+    return model
