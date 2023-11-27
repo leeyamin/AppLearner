@@ -4,12 +4,36 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7c4fca50-34d0-47d0-a400-7bde782bfbb2" name="Changes" comment="Update modularity">
+    <list default="true" id="7c4fca50-34d0-47d0-a400-7bde782bfbb2" name="Changes" comment="Record logs and output; save and load model; configure parser">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Initial_analysis.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/initial_analysis.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Notebooks/1_Initial_Analysis.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Notebooks/2_test_bench.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Notebooks/3_LSTM.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Notebooks/6_deepAR.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Notebooks/7_SCINET.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Notebooks/8_TCN.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TrainedModels/LSTM/Keras/collector_12min.h5" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TrainedModels/LSTM/Keras/collector_12min.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TrainedModels/LSTM/Keras/collector_12min_MAE.h5" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TrainedModels/LSTM/Keras/collector_12min_MAE.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TrainedModels/LSTM/Keras/collector_12min_shallow.h5" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TrainedModels/LSTM/Keras/collector_12min_shallow.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TrainedModels/LSTM/Keras/collector_aggregeted_30min.h5" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TrainedModels/LSTM/Keras/collector_aggregeted_30min.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TrainedModels/TCN/Multivariate_TCN_model.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TrainedModels/TCN/Multivariate_TCN_model.pt.ckpt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/framework_TCN.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/framework__LSTM_Keras.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/framework__LSTM_PyTorch.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/framework__data_set.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/framework__data_set.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/framework__deepar.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/framework__scinet.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/framework__test_bench.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/framework__test_bench_deepar.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/framework__test_bench_scinet.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/pytorch__driver_for_test_bench.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/train_and_validate.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/train_and_validate.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils.py" afterDir="false" />
     </list>
@@ -134,20 +158,17 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="framework__test_bench_scinet" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="framework__data_set" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="AppLearner" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
       <option name="SDK_HOME" value="" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/framework__test_bench_scinet.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/framework__data_set.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="true" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -220,19 +241,19 @@
       <method v="2" />
     </configuration>
     <list>
+      <item itemvalue="Python.framework__data_set" />
       <item itemvalue="Python.utils" />
       <item itemvalue="Python.train_and_validate" />
       <item itemvalue="Python.main" />
-      <item itemvalue="Python.framework__test_bench_scinet" />
       <item itemvalue="Python.framework_TCN" />
     </list>
     <recent_temporary>
       <list>
         <item itemvalue="Python.main" />
+        <item itemvalue="Python.framework__data_set" />
         <item itemvalue="Python.utils" />
         <item itemvalue="Python.train_and_validate" />
         <item itemvalue="Python.framework_TCN" />
-        <item itemvalue="Python.framework__test_bench_scinet" />
       </list>
     </recent_temporary>
   </component>
@@ -310,7 +331,7 @@
       <workItem from="1700158535479" duration="1178000" />
       <workItem from="1700383256940" duration="203000" />
       <workItem from="1700383468639" duration="7378000" />
-      <workItem from="1700397028346" duration="10453000" />
+      <workItem from="1700397028346" duration="39284000" />
     </task>
     <task id="LOCAL-00001" summary="Adding LSTM model">
       <created>1679245750742</created>
@@ -535,7 +556,15 @@
       <option name="project" value="LOCAL" />
       <updated>1699347844076</updated>
     </task>
-    <option name="localTasksCounter" value="30" />
+    <task id="LOCAL-00030" summary="Record logs and output; save and load model; configure parser">
+      <option name="closed" value="true" />
+      <created>1700495262709</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1700495262709</updated>
+    </task>
+    <option name="localTasksCounter" value="31" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -553,7 +582,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Adding train and save LSTM model to src" />
     <MESSAGE value="Clear irrelevant outputs" />
     <MESSAGE value="Initial analysis notebook" />
     <MESSAGE value="Improving initial analysis notebook" />
@@ -578,7 +606,8 @@
     <MESSAGE value="darts models initial configuration" />
     <MESSAGE value="data functions merged into class" />
     <MESSAGE value="Update modularity" />
-    <option name="LAST_COMMIT_MESSAGE" value="Update modularity" />
+    <MESSAGE value="Record logs and output; save and load model; configure parser" />
+    <option name="LAST_COMMIT_MESSAGE" value="Record logs and output; save and load model; configure parser" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -589,78 +618,14 @@
           <option name="timeStamp" value="1" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/pytorch__driver_for_test_bench.py</url>
-          <line>91</line>
-          <option name="timeStamp" value="8" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/pytorch__driver_for_test_bench.py</url>
-          <line>213</line>
-          <option name="timeStamp" value="9" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/framework__LSTM_Keras.py</url>
-          <line>183</line>
-          <option name="timeStamp" value="123" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/framework__LSTM_Keras.py</url>
-          <line>186</line>
-          <option name="timeStamp" value="124" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/framework_TCN.py</url>
-          <line>65</line>
-          <option name="timeStamp" value="158" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/framework_TCN.py</url>
-          <line>88</line>
-          <option name="timeStamp" value="159" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/framework_TCN.py</url>
-          <line>126</line>
-          <option name="timeStamp" value="160" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/framework_TCN.py</url>
-          <line>104</line>
-          <option name="timeStamp" value="161" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/framework_TCN.py</url>
-          <line>85</line>
-          <option name="timeStamp" value="163" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/framework_TCN.py</url>
-          <line>110</line>
-          <option name="timeStamp" value="164" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/framework__deepar.py</url>
-          <line>114</line>
-          <option name="timeStamp" value="168" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/utils.py</url>
+          <url>file://$PROJECT_DIR$/src/train_and_validate.py</url>
           <line>74</line>
-          <option name="timeStamp" value="170" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/main.py</url>
-          <option name="timeStamp" value="172" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/framework__data_set.py</url>
-          <line>11</line>
-          <option name="timeStamp" value="173" />
+          <option name="timeStamp" value="184" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/src/utils.py</url>
-          <line>7</line>
-          <option name="timeStamp" value="174" />
+          <line>25</line>
+          <option name="timeStamp" value="186" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -679,7 +644,7 @@
     <SUITE FILE_PATH="coverage/AppLearner$framework__LSTM_Keras.coverage" NAME="framework__LSTM_Keras Coverage Results" MODIFIED="1691060121704" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/AppLearner$train_and_validate.coverage" NAME="train_and_validate Coverage Results" MODIFIED="1697544306510" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/AppLearner$app_predict.coverage" NAME="app_predict Coverage Results" MODIFIED="1679229861146" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Adi_LSTM" />
-    <SUITE FILE_PATH="coverage/AppLearner$main.coverage" NAME="main Coverage Results" MODIFIED="1700397374664" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
+    <SUITE FILE_PATH="coverage/AppLearner$main.coverage" NAME="main Coverage Results" MODIFIED="1700566848796" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/AppLearner$app_training__1_.coverage" NAME="app_training (1) Coverage Results" MODIFIED="1678701767917" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Jesus_LSTM" />
     <SUITE FILE_PATH="coverage/AppLearner$app_training.coverage" NAME="app_training Coverage Results" MODIFIED="1683548695973" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Adi_LSTM" />
     <SUITE FILE_PATH="coverage/AppLearner$app_predict__1_.coverage" NAME="app_predict (1) Coverage Results" MODIFIED="1678796179291" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Adi_LSTM" />
@@ -687,6 +652,7 @@
     <SUITE FILE_PATH="coverage/AppLearner$framework__test_bench_scinet.coverage" NAME="framework__test_bench_scinet Coverage Results" MODIFIED="1693815440758" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/AppLearner$framework_TCN.coverage" NAME="framework_TCN Coverage Results" MODIFIED="1694523692618" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/AppLearner$Extractor.coverage" NAME="Extractor Coverage Results" MODIFIED="1676806253379" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/AppLearner$framework__data_set.coverage" NAME="framework__data_set Coverage Results" MODIFIED="1700552228495" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/AppLearner$framework__LSTM_PyTorch.coverage" NAME="framework__LSTM_PyTorch Coverage Results" MODIFIED="1690126383499" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/AppLearner$Data_extractor.coverage" NAME="Data_extractor Coverage Results" MODIFIED="1678979316249" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>

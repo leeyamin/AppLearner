@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     data_set = data.get_time_series_data()
 
-    data.split_to_train_and_test_Lee()
+    data.split_to_train_and_test()
     data.transform_and_scale_data()
 
     model = utils.get_model()

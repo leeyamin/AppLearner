@@ -3,20 +3,41 @@ from tabulate import tabulate
 import darts
 from darts.metrics import mae, mape, mse, rmse
 from torch.utils.tensorboard import SummaryWriter
+from darts.models import TCNModel, NBEATSModel, RNNModel
+from typing import Dict, Union
+import os
 
 from src.config import config
 import src.utils as utils
+from src.framework__data_set import TimeSeriesDataSet
 
 
-def format_number(number):
+def format_number(number: float) -> str:
+    """Format a number to a string of 4 decimal places."""
     return f"{number:.4f}"
 
 
-def plot_forecast_vs_actual(epoch_idx, forecast_data, actual_data, df_idx, df_metrics_dict, is_train):
+def plot_forecast_vs_actual(
+        epoch_idx: int,
+        forecast_data: float, actual_data: float,
+        df_idx: int, df_metrics_dict: Dict, is_train: bool,
+        output_path: str = config.output_path,
+        model_name: str = config.model_name) -> None:
+    """
+    Plot the forecast vs actual data of a dataframe.
+    @param epoch_idx: number of the epoch
+    @param forecast_data: predicted data across time
+    @param actual_data: actual data across time
+    @param df_idx: index of the dataframe (i.e. the index of the time series)
+    @param df_metrics_dict: dictionary of the computed metrics of the dataframe
+    @param is_train: whether the data is train or validation
+    @param output_path: path to the output directory
+    @param model_name: name of the model
+    @return None
+    """
     mode = "train" if is_train else "val"
-    main_output_path = f"{config.output_path}/forecast_vs_actual/{mode}"
+    main_output_path = f"{output_path}/forecast_vs_actual/{mode}"
     df_idx_output_path = f"{main_output_path}/{df_idx}/"
-    import os
     if not os.path.exists(df_idx_output_path):
         os.makedirs(df_idx_output_path)
 
@@ -25,7 +46,7 @@ def plot_forecast_vs_actual(epoch_idx, forecast_data, actual_data, df_idx, df_me
     forecast_data.plot(label='Forecast', color='blue', alpha=0.5)
     actual_data.plot(label='Actual', color='black')
     plt.legend()
-    plt.title(f'({config.model_name}) Epoch ({epoch_idx}) {mode} Forecasting (df={df_idx}):\n '
+    plt.title(f'({model_name}) Epoch ({epoch_idx}) {mode} Forecasting (df={df_idx}):\n '
               f'MAE = {df_metrics_dict["mae"]:.4f}'
               f' MAPE = {df_metrics_dict["mape"]:.4f}'
               f' MSE = {df_metrics_dict["mse"]:.4f}'
@@ -35,7 +56,22 @@ def plot_forecast_vs_actual(epoch_idx, forecast_data, actual_data, df_idx, df_me
     plt.close()
 
 
-def train_one_epoch(epoch_idx, model, data):
+def train_one_epoch(epoch_idx: int,
+                    model: Union[TCNModel, NBEATSModel, RNNModel],
+                    data: TimeSeriesDataSet,
+                    look_back: int = config.look_back,
+                    transformation_method: str = config.transformation_method,
+                    scale_method: str = config.scale_method) -> Dict:
+    """
+    Train the model one epoch through each dataframe, and record the epoch metrics.
+    @param epoch_idx: number of the epoch
+    @param model: model to train from the darts library
+    @param data: time series data object
+    @param look_back: number of time steps to look back
+    @param transformation_method: transformation method for the data
+    @param scale_method: scale method for the data
+    @return: dictionary of the computed metrics of the epoch
+    """
     epoch_train_maes = []
     epoch_train_mapes = []
     epoch_train_mses = []
@@ -52,21 +88,21 @@ def train_one_epoch(epoch_idx, model, data):
                                                               value_cols='sample')
 
         model.fit(series=darts_train_dataset, past_covariates=None, verbose=False)
-        train_forecast = model.predict(n=len(darts_train_dataset) - config.look_back,
-                                       series=darts_train_dataset[:config.look_back])
+        train_forecast = model.predict(n=len(darts_train_dataset) - look_back,
+                                       series=darts_train_dataset[:look_back])
 
         train_forecast.values = data.re_transform_and_re_scale_data(darts_values=train_forecast.values(),
-                                                                    transformation_method=config.transformation_method,
-                                                                    scale_method=config.scale_method)
+                                                                    transformation_method=transformation_method,
+                                                                    scale_method=scale_method)
         darts_train_dataset.values = data.re_transform_and_re_scale_data(darts_values=darts_train_dataset.values(),
-                                                                         transformation_method=config.transformation_method,
-                                                                         scale_method=config.scale_method)
+                                                                         transformation_method=transformation_method,
+                                                                         scale_method=scale_method)
 
-        assert len(darts_train_dataset[config.look_back:]) == len(train_forecast)
-        train_mae = mae(darts_train_dataset[config.look_back:], train_forecast)
-        train_mape = mape(darts_train_dataset[config.look_back:], train_forecast)
-        train_mse = mse(darts_train_dataset[config.look_back:], train_forecast)
-        train_rmse = rmse(darts_train_dataset[config.look_back:], train_forecast)
+        assert len(darts_train_dataset[look_back:]) == len(train_forecast)
+        train_mae = mae(darts_train_dataset[look_back:], train_forecast)
+        train_mape = mape(darts_train_dataset[look_back:], train_forecast)
+        train_mse = mse(darts_train_dataset[look_back:], train_forecast)
+        train_rmse = rmse(darts_train_dataset[look_back:], train_forecast)
 
         epoch_train_maes.append(train_mae)
         epoch_train_mapes.append(train_mape)
@@ -83,6 +119,7 @@ def train_one_epoch(epoch_idx, model, data):
         plot_forecast_vs_actual(epoch_idx, train_forecast, darts_train_dataset, df_idx, train_df_metrics_dict,
                                 is_train=True)
 
+    # compute epoch metrics (average of all dfs)
     epoch_train_metrics_dict = {
         "mae": sum(epoch_train_maes) / len(epoch_train_maes),
         "mape": sum(epoch_train_mapes) / len(epoch_train_mapes),
@@ -93,7 +130,16 @@ def train_one_epoch(epoch_idx, model, data):
     return epoch_train_metrics_dict
 
 
-def validate_one_epoch(epoch_idx, model, data):
+def validate_one_epoch(epoch_idx: int,
+                       model: Union[TCNModel, NBEATSModel, RNNModel],
+                       data: TimeSeriesDataSet) -> Dict:
+    """
+    Validate the model one epoch through each dataframe, and record the epoch metrics.
+    @param epoch_idx: number of the epoch
+    @param model: model to validate from the darts library
+    @param data: time series data object
+    @return: dictionary of the computed metrics of the epoch
+    """
     epoch_val_maes = []
     epoch_val_mapes = []
     epoch_val_mses = []
@@ -101,6 +147,7 @@ def validate_one_epoch(epoch_idx, model, data):
 
     val_dfs = data.get_val_time_series_data()
 
+    # validate on each df (one epoch = one pass through all dfs)
     for df_idx in val_dfs['source_df_idx'].unique():
         val_df_dataset = val_dfs[val_dfs['source_df_idx'] == df_idx]
 
@@ -140,6 +187,7 @@ def validate_one_epoch(epoch_idx, model, data):
         plot_forecast_vs_actual(epoch_idx, val_forecast, darts_val_dataset, df_idx, val_df_metrics_dict,
                                 is_train=False)
 
+    # compute epoch metrics (average of all dfs)
     epoch_val_metrics_dict = {
         "mae": sum(epoch_val_maes) / len(epoch_val_maes),
         "mape": sum(epoch_val_mapes) / len(epoch_val_mapes),
@@ -150,8 +198,18 @@ def validate_one_epoch(epoch_idx, model, data):
     return epoch_val_metrics_dict
 
 
-def write_metrics_to_tensorboard(epoch_idx, epoch_train_metrics_dict, epoch_val_metrics_dict,
-                                 train_writer, val_writer):
+def write_metrics_to_tensorboard(epoch_idx: int,
+                                 epoch_train_metrics_dict: Dict, epoch_val_metrics_dict: Dict,
+                                 train_writer: SummaryWriter, val_writer: SummaryWriter) -> None:
+    """
+    Write the metrics of the epoch to tensorboard.
+    @param epoch_idx: number of the epoch
+    @param epoch_train_metrics_dict: dictionary of the computed metrics of the train data
+    @param epoch_val_metrics_dict: dictionary of the computed metrics of the validation data
+    @param train_writer: SummaryWriter object of the train data
+    @param val_writer: SummaryWriter object of the validation data
+    @return None
+    """
     for metric in config.evaluation_metrics:
         train_writer.add_scalar(metric, epoch_train_metrics_dict[metric], epoch_idx)
         val_writer.add_scalar(metric, epoch_val_metrics_dict[metric], epoch_idx)
@@ -160,9 +218,13 @@ def write_metrics_to_tensorboard(epoch_idx, epoch_train_metrics_dict, epoch_val_
     val_writer.close()
 
 
-def print_metrics_in_table(epoch_idx, epoch_train_metrics_dict, epoch_val_metrics_dict):
+def print_metrics_in_table(epoch_idx: int, epoch_train_metrics_dict: Dict, epoch_val_metrics_dict: Dict) -> None:
     """
-    Prints the metrics in a table.
+    Print the metrics of the epoch in a table.
+    @param epoch_idx: number of the epoch
+    @param epoch_train_metrics_dict: dictionary of the computed metrics of the train data
+    @param epoch_val_metrics_dict: dictionary of the computed metrics of the validation data
+    @return None
     """
     results_data = [
         ["Train",
@@ -184,7 +246,13 @@ def print_metrics_in_table(epoch_idx, epoch_train_metrics_dict, epoch_val_metric
     utils.record_logs_to_txt(tabulate(results_data, headers=headers, tablefmt="pretty"))
 
 
-def plot_metrics(total_epochs_train_metrics_dict, total_epochs_val_metrics_dict):
+def plot_metrics(total_epochs_train_metrics_dict: Dict, total_epochs_val_metrics_dict: Dict) -> None:
+    """
+    Plot the metrics convergence across epochs.
+    @param total_epochs_train_metrics_dict: dictionary of the computed metrics of the train data across epochs
+    @param total_epochs_val_metrics_dict: dictionary of the computed metrics of the validation data across epochs
+    @return None
+    """
     for metric in config.evaluation_metrics:
         train_values = [float(epoch_metrics[metric]) for epoch_metrics in total_epochs_train_metrics_dict.values()]
         val_values = [float(epoch_metrics[metric]) for epoch_metrics in total_epochs_val_metrics_dict.values()]
@@ -198,7 +266,14 @@ def plot_metrics(total_epochs_train_metrics_dict, total_epochs_val_metrics_dict)
         plt.close()
 
 
-def train_and_validate(model, data):
+def train_and_validate(model: Union[TCNModel, NBEATSModel, RNNModel],
+                       data: TimeSeriesDataSet) -> Union[TCNModel, NBEATSModel, RNNModel]:
+    """
+    Train and validate the model across epochs; record results and save best model.
+    @param model: model to train and validate from the darts library
+    @param data: time series data object
+    @return model: trained model of the last epoch
+    """
     total_epochs_train_metrics_dict = {}
     total_epochs_val_metrics_dict = {}
     val_mae_min = float('inf')
