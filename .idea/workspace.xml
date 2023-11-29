@@ -4,36 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7c4fca50-34d0-47d0-a400-7bde782bfbb2" name="Changes" comment="Record logs and output; save and load model; configure parser">
+    <list default="true" id="7c4fca50-34d0-47d0-a400-7bde782bfbb2" name="Changes" comment="Delete files; add documentation">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Initial_analysis.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/initial_analysis.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Notebooks/1_Initial_Analysis.ipynb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Notebooks/2_test_bench.ipynb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Notebooks/3_LSTM.ipynb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Notebooks/6_deepAR.ipynb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Notebooks/7_SCINET.ipynb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Notebooks/8_TCN.ipynb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/TrainedModels/LSTM/Keras/collector_12min.h5" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/TrainedModels/LSTM/Keras/collector_12min.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/TrainedModels/LSTM/Keras/collector_12min_MAE.h5" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/TrainedModels/LSTM/Keras/collector_12min_MAE.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/TrainedModels/LSTM/Keras/collector_12min_shallow.h5" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/TrainedModels/LSTM/Keras/collector_12min_shallow.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/TrainedModels/LSTM/Keras/collector_aggregeted_30min.h5" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/TrainedModels/LSTM/Keras/collector_aggregeted_30min.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/TrainedModels/TCN/Multivariate_TCN_model.pt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/TrainedModels/TCN/Multivariate_TCN_model.pt.ckpt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/framework_TCN.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/framework__LSTM_Keras.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/framework__LSTM_PyTorch.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/framework__data_set.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/framework__data_set.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/framework__deepar.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/framework__scinet.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/framework__test_bench.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/framework__test_bench_deepar.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/framework__test_bench_scinet.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/pytorch__driver_for_test_bench.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/train_and_validate.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/train_and_validate.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils.py" afterDir="false" />
     </list>
@@ -84,22 +60,22 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "WebServerToolWindowFactoryState": "false",
-    "git-widget-placeholder": "darts__package",
-    "last_opened_file_path": "/Users/lyamin/Desktop/PycharmProjects/AppLearner",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "python.debugger.dataview.coloredbydefault": "false",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;darts__package&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/lyamin/Desktop/PycharmProjects/AppLearner&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;python.debugger.dataview.coloredbydefault&quot;: &quot;false&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/src" />
@@ -162,6 +138,9 @@
       <module name="AppLearner" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
       <option name="SDK_HOME" value="" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src" />
       <option name="IS_MODULE_SDK" value="true" />
@@ -331,7 +310,10 @@
       <workItem from="1700158535479" duration="1178000" />
       <workItem from="1700383256940" duration="203000" />
       <workItem from="1700383468639" duration="7378000" />
-      <workItem from="1700397028346" duration="39284000" />
+      <workItem from="1700397028346" duration="44487000" />
+      <workItem from="1701098507209" duration="11274000" />
+      <workItem from="1701172757786" duration="1788000" />
+      <workItem from="1701176817358" duration="17574000" />
     </task>
     <task id="LOCAL-00001" summary="Adding LSTM model">
       <created>1679245750742</created>
@@ -564,7 +546,15 @@
       <option name="project" value="LOCAL" />
       <updated>1700495262709</updated>
     </task>
-    <option name="localTasksCounter" value="31" />
+    <task id="LOCAL-00031" summary="Delete files; add documentation">
+      <option name="closed" value="true" />
+      <created>1701087017234</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1701087017234</updated>
+    </task>
+    <option name="localTasksCounter" value="32" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -582,7 +572,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Clear irrelevant outputs" />
     <MESSAGE value="Initial analysis notebook" />
     <MESSAGE value="Improving initial analysis notebook" />
     <MESSAGE value="Fix run issues" />
@@ -607,7 +596,8 @@
     <MESSAGE value="data functions merged into class" />
     <MESSAGE value="Update modularity" />
     <MESSAGE value="Record logs and output; save and load model; configure parser" />
-    <option name="LAST_COMMIT_MESSAGE" value="Record logs and output; save and load model; configure parser" />
+    <MESSAGE value="Delete files; add documentation" />
+    <option name="LAST_COMMIT_MESSAGE" value="Delete files; add documentation" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -618,14 +608,14 @@
           <option name="timeStamp" value="1" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/train_and_validate.py</url>
-          <line>74</line>
-          <option name="timeStamp" value="184" />
+          <url>file://$PROJECT_DIR$/src/utils.py</url>
+          <line>12</line>
+          <option name="timeStamp" value="186" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/utils.py</url>
-          <line>25</line>
-          <option name="timeStamp" value="186" />
+          <url>file://$PROJECT_DIR$/src/train_and_validate.py</url>
+          <line>44</line>
+          <option name="timeStamp" value="198" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -644,7 +634,7 @@
     <SUITE FILE_PATH="coverage/AppLearner$framework__LSTM_Keras.coverage" NAME="framework__LSTM_Keras Coverage Results" MODIFIED="1691060121704" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/AppLearner$train_and_validate.coverage" NAME="train_and_validate Coverage Results" MODIFIED="1697544306510" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/AppLearner$app_predict.coverage" NAME="app_predict Coverage Results" MODIFIED="1679229861146" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Adi_LSTM" />
-    <SUITE FILE_PATH="coverage/AppLearner$main.coverage" NAME="main Coverage Results" MODIFIED="1700566848796" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
+    <SUITE FILE_PATH="coverage/AppLearner$main.coverage" NAME="main Coverage Results" MODIFIED="1701258000066" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/AppLearner$app_training__1_.coverage" NAME="app_training (1) Coverage Results" MODIFIED="1678701767917" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Jesus_LSTM" />
     <SUITE FILE_PATH="coverage/AppLearner$app_training.coverage" NAME="app_training Coverage Results" MODIFIED="1683548695973" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Adi_LSTM" />
     <SUITE FILE_PATH="coverage/AppLearner$app_predict__1_.coverage" NAME="app_predict (1) Coverage Results" MODIFIED="1678796179291" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Adi_LSTM" />

@@ -2,10 +2,12 @@ import matplotlib.pyplot as plt
 from tabulate import tabulate
 import darts
 from darts.metrics import mae, mape, mse, rmse
-from torch.utils.tensorboard import SummaryWriter
 from darts.models import TCNModel, NBEATSModel, RNNModel
+import darts.utils.timeseries_generation as tg
+from torch.utils.tensorboard import SummaryWriter
 from typing import Dict, Union
 import os
+from tqdm import tqdm
 
 from src.config import config
 import src.utils as utils
@@ -38,12 +40,9 @@ def plot_forecast_vs_actual(
     mode = "train" if is_train else "val"
     main_output_path = f"{output_path}/forecast_vs_actual/{mode}"
     df_idx_output_path = f"{main_output_path}/{df_idx}/"
-    if not os.path.exists(df_idx_output_path):
-        os.makedirs(df_idx_output_path)
+    os.makedirs(df_idx_output_path, exist_ok=True)
 
-    plt.figure(figsize=(20, 10))
-
-    forecast_data.plot(label='Forecast', color='blue', alpha=0.5)
+    forecast_data.plot(label='Forecast', color='blue', low_quantile=0.15, high_quantile=0.85, alpha=0.3)
     actual_data.plot(label='Actual', color='black')
     plt.legend()
     plt.title(f'({model_name}) Epoch ({epoch_idx}) {mode} Forecasting (df={df_idx}):\n '
@@ -80,16 +79,32 @@ def train_one_epoch(epoch_idx: int,
     train_dfs = data.get_train_time_series_data()
 
     # train on each df (one epoch = one pass through all dfs)
-    for df_idx in train_dfs['source_df_idx'].unique():
+    for df_idx in tqdm(train_dfs['source_df_idx'].unique(), leave=True, position=0, desc="Train"):
         train_df_dataset = train_dfs[train_dfs['source_df_idx'] == df_idx]
 
         darts_train_dataset = darts.TimeSeries.from_dataframe(train_df_dataset,
                                                               time_col='time',
                                                               value_cols='sample')
+        if model.model_name == 'DeepAR':
+            length = len(darts_train_dataset)
+            noise = tg.gaussian_timeseries(length=length, std=0.6)
+            noise_modulator = (
+                                      tg.sine_timeseries(length=length, value_frequency=0.02)
+                                      + tg.constant_timeseries(length=length, value=1)
+                              ) / 2
+            noise = noise * noise_modulator
+            darts_train_dataset = sum([noise, darts_train_dataset])
+            covariates = noise_modulator
+            model.fit(series=darts_train_dataset, verbose=False, future_covariates=covariates)
+            # TODO: if DeepTCN is implemented
+            #  (see https://github.com/unit8co/darts/blob/master/examples/09-DeepTCN-examples.ipynb)
+            # model.fit(series=darts_train_dataset, verbose=False, past_covariates=covariates)
+        else:
+            model.fit(series=darts_train_dataset, verbose=False, past_covariates=None)
 
-        model.fit(series=darts_train_dataset, past_covariates=None, verbose=False)
         train_forecast = model.predict(n=len(darts_train_dataset) - look_back,
-                                       series=darts_train_dataset[:look_back])
+                                       series=darts_train_dataset[:look_back],
+                                       num_samples=100)
 
         train_forecast.values = data.re_transform_and_re_scale_data(darts_values=train_forecast.values(),
                                                                     transformation_method=transformation_method,
@@ -148,7 +163,7 @@ def validate_one_epoch(epoch_idx: int,
     val_dfs = data.get_val_time_series_data()
 
     # validate on each df (one epoch = one pass through all dfs)
-    for df_idx in val_dfs['source_df_idx'].unique():
+    for df_idx in tqdm(val_dfs['source_df_idx'].unique(), leave=True, position=0, desc="Validation"):
         val_df_dataset = val_dfs[val_dfs['source_df_idx'] == df_idx]
 
         darts_val_dataset = darts.TimeSeries.from_dataframe(val_df_dataset,
@@ -156,7 +171,8 @@ def validate_one_epoch(epoch_idx: int,
                                                             value_cols='sample')
 
         val_forecast = model.predict(n=len(darts_val_dataset) - config.look_back,
-                                     series=darts_val_dataset[:config.look_back])
+                                     series=darts_val_dataset[:config.look_back],
+                                     num_samples=100)
 
         val_forecast.values = data.re_transform_and_re_scale_data(darts_values=val_forecast.values(),
                                                                   transformation_method=config.transformation_method,
@@ -274,6 +290,7 @@ def train_and_validate(model: Union[TCNModel, NBEATSModel, RNNModel],
     @param data: time series data object
     @return model: trained model of the last epoch
     """
+    utils.disable_pytorch_lightning_logging()
     total_epochs_train_metrics_dict = {}
     total_epochs_val_metrics_dict = {}
     val_mae_min = float('inf')

@@ -3,7 +3,7 @@ import argparse
 parser = argparse.ArgumentParser()
 
 # TODO: configure in model cuda device
-parser.add_argument('--cuda_available', type=int, default=0, help='CUDA device index')
+parser.add_argument('--gpu_idx', type=int, default=None, help='CUDA device index')
 
 parser.add_argument('--metric', type=str, default='container_cpu', help='metric type')
 parser.add_argument('--application_name', type=str, default='collector', help='application name')
@@ -18,7 +18,7 @@ parser.add_argument('--scale_method', type=str, default='min-max', help='scaling
 
 parser.add_argument('--look_back', type=int, default=12, help='look back window size')
 parser.add_argument('--horizon', type=int, default=2, help='prediction horizon')
-parser.add_argument('--model_name', type=str, default='TCN', help='model name')
+parser.add_argument('--model_name', type=str, default='TCN', help='model name: TCN, NBEATS, DeepAR')
 parser.add_argument('--trained_model_path', type=str, default=None, help='path to a pre-trained model')
 
 parser.add_argument('--num_epochs', type=int, default=2, help='number of epochs')

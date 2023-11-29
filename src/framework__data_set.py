@@ -101,11 +101,8 @@ class TimeSeriesDataSet:
         self.val_time_series_data['sample'] = val_time_series_data.squeeze()
 
     def split_to_train_and_test(self):
-        """
-        Split the data into train and test sets according to a specified train ratio.
-        The splitting is made upon the shuffled data frames, and not the samples.
-        @return None
-        """
+        """Split the data into train and test sets according to a specified train ratio.
+        The splitting is made upon the shuffled data frames, and not the samples."""
         num_dfs = len(self.time_series_data['source_df_idx'].unique())
         num_dfs_train = int(num_dfs * config.train_ratio)
 
@@ -122,25 +119,16 @@ class TimeSeriesDataSet:
         self.val_time_series_data = val_data
 
     def record_df_indices(self):
-        """
-        Add a column to each dataframe that indicates the index of the dataframe in the list of dataframes.
-        @return None
-        """
+        """Add a column to each dataframe that indicates the index of the dataframe in the list of dataframes."""
         for idx, df in enumerate(self.list_of_df):
             df['source_df_idx'] = idx
 
     def concatenate_dfs(self):
-        """
-        Concatenate the data frames into one data frame.
-        @return None
-        """
+        """Concatenate the data frames into one data frame."""
         self.dfs_concatenated = pd.concat(self.list_of_df)
 
     def set_time_series_data(self):
-        """
-        Set the time series data according to the concatenated data frames with the relevant columns.
-        @return None
-        """
+        """Set the time series data according to the concatenated data frames with the relevant columns."""
         self.time_series_data = self.dfs_concatenated[['sample', 'time', 'source_df_idx']]
 
     def get_time_series_data(self):

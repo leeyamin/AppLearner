@@ -1,26 +1,13 @@
-import random
-import numpy as np
-import os
 import torch
+import os
 from darts.logging import get_logger
 from argparse import ArgumentParser
 from typing import Union
 from darts.models import TCNModel, NBEATSModel, RNNModel
+import logging
 
 from src.config import config
 import src.models as models
-
-
-def seed_everything(seed: int = 42) -> None:
-    """Seed parameters for reproducibility of results."""
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed(seed)
-        torch.cuda.manual_seed_all(seed)
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = False
 
 
 def get_output_path(model_name: str = config.model_name) -> str:
@@ -62,6 +49,31 @@ def record_logs_to_txt(txt: str, output_path: str = config.output_path) -> None:
     """
     txt_file = open(f'{output_path}/logs.txt', "a")
     txt_file.write(f'{txt}\n')
+
+
+def generate_torch_kwargs(gpu_idx: int = config.gpu_idx):
+    """
+    Get the kwargs for the pytorch lightning trainer based on the gpu index and disable pytorch lightning logging.
+    @param gpu_idx: the index of the gpu to use
+    @return pl_trainer_kwargs: the kwargs for the pytorch lightning trainer
+    """
+    if torch.cuda.is_available():
+        if gpu_idx is not None:
+            return {
+                "pl_trainer_kwargs": {"accelerator": "gpu", "devices": [gpu_idx],
+                                      "enable_progress_bar": False}
+            }
+        else:
+            raise NotImplementedError("GPU is available but not used.")
+            # return {
+            #     "pl_trainer_kwargs": {"accelerator": "gpu", "devices": -1, "auto_select_gpus": True,
+            #                      "enable_progress_bar": False}
+            # }
+    else:
+        return {
+            "pl_trainer_kwargs": {"accelerator": "cpu",
+                                  "enable_progress_bar": False}
+        }
 
 
 def get_model(model_name: str = config.model_name,
@@ -115,6 +127,11 @@ def load_model_if_exists(model: Union[TCNModel, NBEATSModel, RNNModel],
     return model
 
 
+def disable_pytorch_lightning_logging() -> None:
+    """Disable pytorch lightning logging."""
+    logging.getLogger("pytorch_lightning").setLevel(logging.WARNING)
+
+
 def save_model(model: Union[TCNModel, NBEATSModel, RNNModel], model_name: str = config.model_name,
                output_path: str = config.output_path) -> None:
     """Save model weights to the output folder."""
@@ -124,5 +141,4 @@ def save_model(model: Union[TCNModel, NBEATSModel, RNNModel], model_name: str = 
 
 
 if __name__ == '__main__':
-    seed_everything()
     print(get_output_path())

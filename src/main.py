@@ -8,7 +8,6 @@ import warnings
 warnings.filterwarnings("ignore", category=UserWarning, message="MPS available but not used.")
 
 if __name__ == '__main__':
-    utils.seed_everything()
     config.output_path = utils.get_output_path()
     utils.record_config(config)
 
