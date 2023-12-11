@@ -1,4 +1,5 @@
 import argparse
+import os
 
 parser = argparse.ArgumentParser()
 
@@ -26,9 +27,27 @@ parser.add_argument('--batch_size', type=int, default=16, help='batch size')
 parser.add_argument('--learning_rate', type=float, default=0.0001, help='learning rate')
 parser.add_argument('--loss_function', type=str, default='L1Loss', help='loss function type')
 
+# TODO: delete this from config
 parser.add_argument('--evaluation_metrics', default=["mae", "mape", "mse", "rmse"],
                     help='evaluation metrics')
 
 parser.add_argument('--output_path', type=str, default=None, help='output path')
 
 config = parser.parse_args()
+
+
+def get_output_path(model_name: str = config.model_name) -> str:
+    """
+    Get the output path for a specific run as the first available index in the output folder based on the model name.
+    @param model_name: the name of the model
+    @return output_path: the path to the output folder
+    """
+    idx = 0
+    while True:
+        output_path = f"../output/{model_name}_{idx}"
+        if not os.path.exists(output_path):
+            return output_path
+        idx += 1
+
+
+config.output_path = get_output_path()

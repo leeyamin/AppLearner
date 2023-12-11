@@ -10,20 +10,6 @@ from src.config import config
 import src.models as models
 
 
-def get_output_path(model_name: str = config.model_name) -> str:
-    """
-    Get the output path for a specific run as the first available index in the output folder based on the model name.
-    @param model_name: the name of the model
-    @return output_path: the path to the output folder
-    """
-    idx = 0
-    while True:
-        output_path = f"../output/{model_name}_{idx}"
-        if not os.path.exists(output_path):
-            return output_path
-        idx += 1
-
-
 def record_config(config_args: ArgumentParser) -> None:
     """
     Record the configuration of the run to a txt file.
@@ -97,8 +83,8 @@ def get_model(model_name: str = config.model_name,
     else:
         raise NotImplementedError
 
+    record_logs_to_txt('\nModel:', output_path)
     record_logs_to_txt(model, output_path)
-    record_logs_to_txt('\n', output_path)
 
     return model
 
@@ -138,7 +124,3 @@ def save_model(model: Union[TCNModel, NBEATSModel, RNNModel], model_name: str = 
     logger = get_logger(__name__)
     model.save(os.path.join(f'{config.output_path}', f'{model_name}.pth'))
     logger.info(f"Model weights saved to {os.path.join(f'{output_path}', f'{model_name}.pth')}")
-
-
-if __name__ == '__main__':
-    print(get_output_path())

@@ -108,6 +108,7 @@ class TimeSeriesDataSet:
 
         # shuffle between dfs indices (not within dfs)
         unique_indices = self.time_series_data['source_df_idx'].unique()
+        np.random.seed(42)
         np.random.shuffle(unique_indices)
         train_indices = unique_indices[:num_dfs_train]
         val_indices = unique_indices[num_dfs_train:]
@@ -249,7 +250,7 @@ class TimeSeriesDataSet:
         @return re_scaled_darts_values: rescaled data in darts format
         """
         if transformation_method is None and scale_method is None:
-            return
+            return darts_values
         if scale_method is not None:
             darts_values = self.re_scale_data(darts_values, scale_method)
         if transformation_method is not None:
