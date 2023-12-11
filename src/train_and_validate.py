@@ -120,9 +120,10 @@ def train_or_validate_one_epoch(epoch_idx: int,
         mse = darts.metrics.mse(gt, forecast)
         rmse = darts.metrics.rmse(gt, forecast)
 
-        main_output_path = f"{output_path}/forecast_vs_actual/{mode}"
-        df_idx_output_path = f"{main_output_path}/df_idx_{df_idx}/"
-        os.makedirs(df_idx_output_path, exist_ok=True)
+        if output_path is not None:
+            main_output_path = f"{output_path}/forecast_vs_actual/{mode}"
+            df_idx_output_path = f"{main_output_path}/df_idx_{df_idx}/"
+            os.makedirs(df_idx_output_path, exist_ok=True)
 
         forecast.plot(label='forecast', color='blue', low_quantile=0.05, high_quantile=0.95, alpha=0.2)
         series.plot(label='actual', color='black', linestyle='--', alpha=0.5)
@@ -132,7 +133,8 @@ def train_or_validate_one_epoch(epoch_idx: int,
                   f' MSE = {mse:.3f}'
                   f' RMSE = {rmse:.3f}')
         plt.legend()
-        plt.savefig(f"{df_idx_output_path}/df_idx_{df_idx}_epoch_{epoch_idx}.png")
+        if output_path is not None:
+            plt.savefig(f"{df_idx_output_path}/df_idx_{df_idx}_epoch_{epoch_idx}.png")
         if show_plots_flag:
             plt.show()
         plt.close()
@@ -220,7 +222,8 @@ def plot_metrics(total_epochs_train_metrics_dict: Dict, total_epochs_val_metrics
         plt.xticks(range(len(train_values)))
         plt.title(f'({config.model_name}) {metric.upper()} across epochs')
         plt.legend()
-        plt.savefig(f"{output_path}/forecast_vs_actual/{metric}_convergence.png")
+        if output_path is not None:
+            plt.savefig(f"{output_path}/forecast_vs_actual/{metric}_convergence.png")
         if show_plots_flag:
             plt.show()
         plt.close()

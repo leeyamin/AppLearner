@@ -4,15 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7c4fca50-34d0-47d0-a400-7bde782bfbb2" name="Changes" comment="Configure models">
+    <list default="true" id="7c4fca50-34d0-47d0-a400-7bde782bfbb2" name="Changes" comment="Multiseries data in darts; DeepAR implementation">
       <change afterPath="$PROJECT_DIR$/src/results_analysis.ipynb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/framework__data_set.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/framework__data_set.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/train_and_validate.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/train_and_validate.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -335,7 +330,7 @@
       <workItem from="1702212578656" duration="1424000" />
       <workItem from="1702214027189" duration="121000" />
       <workItem from="1702214328878" duration="475000" />
-      <workItem from="1702214819723" duration="21312000" />
+      <workItem from="1702214819723" duration="24854000" />
     </task>
     <task id="LOCAL-00001" summary="Adding LSTM model">
       <created>1679245750742</created>
@@ -584,7 +579,15 @@
       <option name="project" value="LOCAL" />
       <updated>1701258223968</updated>
     </task>
-    <option name="localTasksCounter" value="33" />
+    <task id="LOCAL-00033" summary="Multiseries data in darts; DeepAR implementation">
+      <option name="closed" value="true" />
+      <created>1702292791207</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1702292791208</updated>
+    </task>
+    <option name="localTasksCounter" value="34" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -602,7 +605,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Improving initial analysis notebook" />
     <MESSAGE value="Fix run issues" />
     <MESSAGE value="Read and prepare data" />
     <MESSAGE value="Run complete framework" />
@@ -627,7 +629,8 @@
     <MESSAGE value="Record logs and output; save and load model; configure parser" />
     <MESSAGE value="Delete files; add documentation" />
     <MESSAGE value="Configure models" />
-    <option name="LAST_COMMIT_MESSAGE" value="Configure models" />
+    <MESSAGE value="Multiseries data in darts; DeepAR implementation" />
+    <option name="LAST_COMMIT_MESSAGE" value="Multiseries data in darts; DeepAR implementation" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -639,17 +642,17 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/src/train_and_validate.py</url>
-          <line>134</line>
+          <line>136</line>
           <option name="timeStamp" value="223" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/src/train_and_validate.py</url>
-          <line>199</line>
+          <line>201</line>
           <option name="timeStamp" value="224" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/src/train_and_validate.py</url>
-          <line>126</line>
+          <line>127</line>
           <option name="timeStamp" value="240" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
