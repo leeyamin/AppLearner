@@ -1,6 +1,5 @@
 import src.framework__data_set as framework__data_set
 import src.utils as utils
-from src.config import config
 import src.train_and_validate as train_and_validate
 
 import warnings
@@ -8,7 +7,10 @@ import warnings
 warnings.filterwarnings("ignore", category=UserWarning, message="MPS available but not used.")
 
 if __name__ == '__main__':
-    utils.record_config(config)
+
+    config = utils.get_config()
+    config.output_path = utils.get_output_path(config.model_name)
+    utils.save_config_to_file(config.output_path, config)
 
     data = framework__data_set.get_data_set(
         metric=config.metric,
@@ -16,17 +18,18 @@ if __name__ == '__main__':
         path_to_data='../data/'
     )
 
-    data.prepare_data_for_run()
+    data.set_configurations(config)
+    data.prepare_data_for_run(config.output_path, record_logs_to_txt=True)
 
     data_set = data.get_time_series_data()
 
     data.split_to_train_and_test()
     data.transform_and_scale_data()
 
-    model = utils.get_model()
+    model = utils.get_model(config.model_name, config.look_back, config.horizon, config.gpu_idx, config.output_path)
     model.log_every_n_steps = 1  # handles a warning
 
-    model = utils.load_model_if_exists(model)
-    model = train_and_validate.train_and_validate(model, data)
+    model = utils.load_model_if_exists(model, config.trained_model_path)
+    model = train_and_validate.train_and_validate(model, data, config)
 
-    utils.save_model(model, model_name='model_last')
+    utils.save_model(model, model_name='model_last', output_path=config.output_path)

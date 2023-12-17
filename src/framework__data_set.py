@@ -9,7 +9,6 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from typing import Dict
 
-from src.config import config
 import src.utils as utils
 
 
@@ -21,6 +20,13 @@ class TimeSeriesDataSet:
         self.train_time_series_data = None
         self.val_time_series_data = None
         self.scaler = None
+        # configured parameters
+        self.sub_sample_rate = None
+        self.aggregation_type = None
+        self.data_length_limit_in_minutes = None
+        self.transformation_method = None
+        self.scale_method = None
+        self.train_ratio = None
 
     def get_list(self):
         return self.list_of_df
@@ -31,43 +37,48 @@ class TimeSeriesDataSet:
     def __len__(self):
         return len(self.list_of_df)
 
-    def sub_sample_data(self, sub_sample_rate: int, aggregation_type: str = 'max') -> None:
+    def set_configurations(self, config):
+        self.sub_sample_rate = config.sub_sample_rate
+        self.aggregation_type = config.aggregation_type
+        self.data_length_limit_in_minutes = config.data_length_limit_in_minutes
+        self.transformation_method = config.transformation_method
+        self.scale_method = config.scale_method
+        self.train_ratio = config.train_ratio
+
+    def sub_sample_data(self) -> None:
         """
         Subsample the data by a specified rate and aggregation type.
-        @param sub_sample_rate: the rate of subsampling
-        @param aggregation_type: optional; the type of aggregation to use. currently supports: max, min, avg.
-        @return None
         """
         new_list_of_df = []
 
-        assert sub_sample_rate > 0, f"sub_sample_rate = {sub_sample_rate} must be positive"
-        assert aggregation_type in ['max', 'min', 'avg'], f"aggregation_type = {aggregation_type} is not supported"
-        if sub_sample_rate == 1:
+        assert self.sub_sample_rate > 0, f"sub_sample_rate = {self.sub_sample_rate} must be positive"
+        assert self.aggregation_type in ['max', 'min', 'avg'], \
+            f"aggregation_type = {self.aggregation_type} is not supported"
+        if self.sub_sample_rate == 1:
             # no need to subsample
             return
         for df in self.list_of_df:
-            if aggregation_type == 'max':
-                sub_sampled_data = df.groupby(df.index // sub_sample_rate).max()
-            elif aggregation_type == 'min':
-                sub_sampled_data = df.groupby(df.index // sub_sample_rate).min()
-            elif aggregation_type == 'avg':
-                sub_sampled_data = df.groupby(df.index // sub_sample_rate).mean()
+            if self.aggregation_type == 'max':
+                sub_sampled_data = df.groupby(df.index // self.sub_sample_rate).max()
+            elif self.aggregation_type == 'min':
+                sub_sampled_data = df.groupby(df.index // self.sub_sample_rate).min()
+            elif self.aggregation_type == 'avg':
+                sub_sampled_data = df.groupby(df.index // self.sub_sample_rate).mean()
 
-            assert len(sub_sampled_data) == ((len(df) + sub_sample_rate - 1) // sub_sample_rate)
+            assert len(sub_sampled_data) == ((len(df) + self.sub_sample_rate - 1) // self.sub_sample_rate)
             new_list_of_df.append(sub_sampled_data)
 
         self.list_of_df = new_list_of_df
 
-    def filter_data_that_is_too_short(self, data_length_limit_in_minutes: int) -> None:
+    def filter_data_that_is_too_short(self) -> None:
         """
         Filter the data samples; remove all data samples of length lower than data_length_limit.
-        @param data_length_limit_in_minutes: minimal length of sample in minutes
         @return None
         """
         new_list_of_df = []
 
         for df in self:
-            if len(df) > data_length_limit_in_minutes:
+            if len(df) > self.data_length_limit_in_minutes:
                 new_list_of_df.append(df)
 
         self.list_of_df = new_list_of_df
@@ -104,7 +115,7 @@ class TimeSeriesDataSet:
         """Split the data into train and test sets according to a specified train ratio.
         The splitting is made upon the shuffled data frames, and not the samples."""
         num_dfs = len(self.time_series_data['source_df_idx'].unique())
-        num_dfs_train = int(num_dfs * config.train_ratio)
+        num_dfs_train = int(num_dfs * self.train_ratio)
 
         # shuffle between dfs indices (not within dfs)
         unique_indices = self.time_series_data['source_df_idx'].unique()
@@ -135,45 +146,31 @@ class TimeSeriesDataSet:
     def get_time_series_data(self):
         return self.time_series_data
 
-    def prepare_data_for_run(self,
-                             data_length_limit_in_minutes=config.data_length_limit_in_minutes,
-                             sub_sample_rate=config.sub_sample_rate,
-                             aggregation_type=config.aggregation_type,
-                             record_logs_to_txt=True):
-        """
-        Prepare data for run; filter data that is too short, subsample the data, concatenate the data frames and set.
-        @param data_length_limit_in_minutes: minimal length of sample in minutes
-        @param sub_sample_rate: the rate of subsampling
-        @param aggregation_type: optional; the type of aggregation to use. currently supports: max, min, avg.
-        @param record_logs_to_txt: optional; whether to record logs to txt file
-        @return None
-        """
-        msg = f"Throwing out data that is less than {data_length_limit_in_minutes / 60} hours long."
+    def prepare_data_for_run(self, output_path, record_logs_to_txt=True):
+        """Prepare data for run; filter data that is too short,
+        subsample the data, concatenate the data frames and set."""
+        msg = f"Throwing out data that is less than {self.data_length_limit_in_minutes / 60} hours long."
         print(msg)
-        utils.record_logs_to_txt(msg) if record_logs_to_txt else None
-        self.filter_data_that_is_too_short(data_length_limit_in_minutes)
-        msg = f"Subsampling data from 1 sample per 1 minute to 1 sample per {sub_sample_rate} minutes."
+        utils.record_logs_to_txt(msg, output_path) if record_logs_to_txt else None
+        self.filter_data_that_is_too_short()
+        msg = f"Subsampling data from 1 sample per 1 minute to 1 sample per {self.sub_sample_rate} minutes."
         print(msg)
-        utils.record_logs_to_txt(msg) if record_logs_to_txt else None
-        self.sub_sample_data(sub_sample_rate=sub_sample_rate, aggregation_type=aggregation_type)
+        utils.record_logs_to_txt(msg, output_path) if record_logs_to_txt else None
+        self.sub_sample_data()
 
         self.record_df_indices()
         self.concatenate_dfs()
 
         self.set_time_series_data()
 
-    def transform_data(self, transformation_method: str) -> None:
-        """
-        Transform the data using the specified method. Currently only supports log transformation.
-        @param transformation_method: the method of transformation to use. currently supports: log.
-        @return None
-        """
-        if transformation_method == 'log':
+    def transform_data(self) -> None:
+        """Transform the data using the specified method. Currently only supports log transformation."""
+        if self.transformation_method == 'log':
             epsilon = 1e-8
             self.set_train_time_series_data_samples(np.log(self.train_time_series_data['sample'] + epsilon))
             self.set_val_time_series_data_samples(np.log(self.val_time_series_data['sample'] + epsilon))
         else:
-            raise NotImplementedError(f"transformation_method = {transformation_method} is not supported")
+            raise NotImplementedError(f"transformation_method = {self.transformation_method} is not supported")
 
     def scale_data(self, scale_method: str) -> None:
         """
@@ -194,67 +191,54 @@ class TimeSeriesDataSet:
         else:
             raise NotImplementedError(f"scale_method = {scale_method} is not supported")
 
-    def transform_and_scale_data(self,
-                                 transformation_method: str = config.transformation_method,
-                                 scale_method: str = config.scale_method) -> None:
+    def transform_and_scale_data(self) -> None:
         """
         Transform and scale the data using the specified methods.
-        @param transformation_method: optional; the method of transformation to use. currently supports: log.
-        @param scale_method: optional; the method of scaling to use. currently supports: min-max.
-        @return None
         """
-        if transformation_method is None and scale_method is None:
+        if self.transformation_method is None and self.scale_method is None:
             return
-        if transformation_method is not None:
-            self.transform_data(transformation_method)
-        if scale_method is not None:
-            self.scale_data(scale_method)
+        if self.transformation_method is not None:
+            self.transform_data(self.transformation_method)
+        if self.scale_method is not None:
+            self.scale_data(self.scale_method)
 
-    def re_scale_data(self, darts_values: np.ndarray[np.float64], scale_method: str):
+    def re_scale_data(self, darts_values: np.ndarray[np.float64]):
         """
         Rescale the data.
         @param darts_values: the values to rescale (in darts format)
-        @param scale_method: the method of scaling to use. currently supports: min-max.
         @return re_scaled_darts_values: rescaled data in darts format
         """
-        if scale_method == 'min-max':
+        if self.scale_method == 'min-max':
             re_scaled_darts_values = self.scaler.inverse_transform(darts_values)
         else:
-            raise NotImplementedError(f"scale_method = {scale_method} is not supported")
+            raise NotImplementedError(f"scale_method = {self.scale_method} is not supported")
         return re_scaled_darts_values
 
-    @staticmethod
-    def re_transform_data(darts_values: np.ndarray[np.float64], transformation_method: str):
+    def re_transform_data(self, darts_values: np.ndarray[np.float64]):
         """
         Reverse transforms the data using the specified method.
         @param darts_values: the values to rescale (in darts format)
-        @param transformation_method: the method of transformation to use. currently supports: log
         @return re_transformed_darts_values: rescaled data in darts format
         """
-        if transformation_method == 'log':
+        if self.transformation_method == 'log':
             re_transformed_darts_values = np.exp(darts_values)
         else:
-            raise NotImplementedError
+            raise NotImplementedError(f"transformation_method = {self.transformation_method} is not supported")
         return re_transformed_darts_values
 
-    def re_transform_and_re_scale_data(self,
-                                       darts_values: np.ndarray[np.float64],
-                                       transformation_method: str = config.transformation_method,
-                                       scale_method: str = config.scale_method) -> np.ndarray[np.float64]:
+    def re_transform_and_re_scale_data(self, darts_values: np.ndarray[np.float64]) -> np.ndarray[np.float64]:
         """
         Reverse transforms and scales the data using the specified methods. Currently only supports log transformation and min-max
         scaling.
         @param darts_values: the values to rescale (in darts format)
-        @param transformation_method: optional; the method of transformation to use. currently supports: log
-        @param scale_method: optional; the method of scaling to use. currently supports: min-max
         @return re_scaled_darts_values: rescaled data in darts format
         """
-        if transformation_method is None and scale_method is None:
+        if self.transformation_method is None and self.scale_method is None:
             return darts_values
-        if scale_method is not None:
-            darts_values = self.re_scale_data(darts_values, scale_method)
-        if transformation_method is not None:
-            darts_values = self.re_transform_data(darts_values, transformation_method=transformation_method)
+        if self.scale_method is not None:
+            darts_values = self.re_scale_data(darts_values)
+        if self.transformation_method is not None:
+            darts_values = self.re_transform_data(darts_values)
         return darts_values
 
 

@@ -1,43 +1,69 @@
 import torch
 import os
 from darts.logging import get_logger
-from argparse import ArgumentParser
-from typing import Union
+from typing import Union, Optional
 from darts.models import TCNModel, NBEATSModel, RNNModel
 import logging
+import yaml
 
-from src.config import config
 import src.models as models
 
 
-def record_config(config_args: ArgumentParser) -> None:
+class Config:
+    """convert a dictionary to a class"""
+    def __init__(self, **entries):
+        self.__dict__.update(entries)
+
+
+def get_config():
+    with open('config.yml', 'r') as config_file:
+        config = yaml.safe_load(config_file)
+
+    config = Config(**config)
+
+    return config
+
+
+def get_output_path(model_name: str) -> str:
     """
-    Record the configuration of the run to a txt file.
-    @param config_args: the configuration of the run as a parser object
-    @return None
+    Get the output path for a specific run as the first available index in the output folder based on the model name.
+    @param model_name: the name of the model
+    @return output_path: the path to the output folder
     """
-    os.makedirs(f'{config.output_path}', exist_ok=True)
-    txt_file = open(f'{config.output_path}/logs.txt', "w")
-
-    for arg in vars(config_args):
-        txt_file.write(f"config: {arg} = {getattr(config_args, arg)}\n")
-    txt_file.write("\n")
-
-    txt_file.close()
+    idx = 0
+    while True:
+        output_path = f"../output/{model_name}_{idx}"
+        if not os.path.exists(output_path):
+            return output_path
+        idx += 1
 
 
-def record_logs_to_txt(txt: str, output_path: str = config.output_path) -> None:
+def save_config_to_file(output_path: str, config, filename='config.yml'):
+    """
+    Save the configuration to a YAML file in the specified output path.
+    @param output_path: the path to the output folder
+    @param config: the configuration object
+    @param filename: the name of the configuration file
+    """
+    os.makedirs(output_path, exist_ok=True)
+    config_file_path = os.path.join(output_path, filename)
+    with open(config_file_path, 'w') as config_file:
+        yaml.dump(vars(config), config_file, default_flow_style=False)
+
+
+def record_logs_to_txt(txt: str, output_path: str) -> None:
     """
     Record the logs of the run to a txt file in the output folder.
     @param txt: the logs to record
     @param output_path: the path to the output folder
     @return None
     """
-    txt_file = open(f'{output_path}/logs.txt', "a")
-    txt_file.write(f'{txt}\n')
+    if output_path is not None:
+        txt_file = open(f'{output_path}/logs.txt', "a")
+        txt_file.write(f'{txt}\n')
 
 
-def generate_torch_kwargs(gpu_idx: int = config.gpu_idx):
+def generate_torch_kwargs(gpu_idx: int):
     """
     Get the kwargs for the pytorch lightning trainer based on the gpu index and disable pytorch lightning logging.
     @param gpu_idx: the index of the gpu to use
@@ -62,35 +88,37 @@ def generate_torch_kwargs(gpu_idx: int = config.gpu_idx):
         }
 
 
-def get_model(model_name: str = config.model_name,
-              look_back: int = config.look_back,
-              horizon: int = config.horizon,
-              output_path: str = config.output_path) -> Union[TCNModel, NBEATSModel, RNNModel]:
+def get_model(model_name: str, look_back: int, horizon: int, gpu_idx: Optional[int], output_path: str) \
+        -> Union[TCNModel, NBEATSModel, RNNModel]:
     """
     Get the configured model based on the model name.
     @param model_name: name of the model
     @param look_back: number of time steps to look back
     @param horizon: number of time steps to predict
+    @param gpu_idx: index of the gpu to use (if available)
     @param output_path: path of output folder
     @return model: darts model
     """
     if model_name == "TCN":
-        model = models.tcn_model(look_back, horizon)
+        model = models.tcn_model(look_back, horizon, gpu_idx)
     elif model_name == "NBEATS":
-        model = models.nbeats_model(look_back, horizon)
+        model = models.nbeats_model(look_back, horizon, gpu_idx)
     elif model_name == "DeepAR":
-        model = models.deepar_model(look_back, horizon=None)
+        model = models.deepar_model(look_back, horizon=None, gpu_idx=gpu_idx)
+    elif model_name == "LSTM":
+        model = models.lstm_model(look_back, horizon, gpu_idx)
     else:
         raise NotImplementedError
 
-    record_logs_to_txt('\nModel:', output_path)
-    record_logs_to_txt(model, output_path)
+    if output_path is not None:
+        record_logs_to_txt('\nModel:', output_path)
+        record_logs_to_txt(model, output_path)
 
     return model
 
 
-def load_model_if_exists(model: Union[TCNModel, NBEATSModel, RNNModel],
-                         trained_model_path: str = config.trained_model_path) -> Union[TCNModel, NBEATSModel, RNNModel]:
+def load_model_if_exists(model: Union[TCNModel, NBEATSModel, RNNModel], trained_model_path: str) \
+        -> Union[TCNModel, NBEATSModel, RNNModel]:
     """
     Load model weights if the model path exists.
     @param model: predefined darts model
@@ -108,7 +136,7 @@ def load_model_if_exists(model: Union[TCNModel, NBEATSModel, RNNModel],
             else:
                 logger.warning("Weights file not found. Training from scratch.")
         else:
-            logger.warning("Output path does not exist. Training from scratch.")
+            logger.warning("Trained model path does not exist. Training from scratch.")
 
     return model
 
@@ -118,9 +146,7 @@ def disable_pytorch_lightning_logging() -> None:
     logging.getLogger("pytorch_lightning").setLevel(logging.WARNING)
 
 
-def save_model(model: Union[TCNModel, NBEATSModel, RNNModel], model_name: str = config.model_name,
-               output_path: str = config.output_path) -> None:
+def save_model(model: Union[TCNModel, NBEATSModel, RNNModel], model_name: str, output_path: str) -> None:
     """Save model weights to the output folder."""
-    logger = get_logger(__name__)
-    model.save(os.path.join(f'{config.output_path}', f'{model_name}.pth'))
-    logger.info(f"Model weights saved to {os.path.join(f'{output_path}', f'{model_name}.pth')}")
+    model.save(os.path.join(f'{output_path}', f'{model_name}.pth'))
+    print("Model weights saved.")

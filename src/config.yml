@@ -1,0 +1,20 @@
+gpu_idx: null  # CUDA device index
+metric: container_cpu  # metric type
+application_name: collector  # application name
+sub_sample_rate: 1  # sub-sample rate
+aggregation_type: max  # aggregation type
+data_length_limit_in_minutes: 60  # data length limit in minutes
+train_ratio: 0.8  # training data ratio
+transformation_method: null  # transformation method: log, null
+scale_method: null  # scaling method: min-max, null
+look_back: 12  # look back window size
+horizon: 2  # prediction horizon
+model_name: DeepAR  # model name: TCN, NBEATS, DeepAR, LSTM
+trained_model_path: null  # path to a pre-trained model
+num_epochs: 2  # number of epochs
+batch_size: 8  # batch size
+learning_rate: 0.0001  # learning rate
+loss_function: L1Loss  # loss function type
+output_path: null  # output path
+
+

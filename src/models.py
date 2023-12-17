@@ -4,7 +4,7 @@ from darts.utils.likelihood_models import GaussianLikelihood
 import src.utils as utils
 
 
-def tcn_model(look_back, horizon):
+def tcn_model(look_back, horizon, gpu_idx):
     return (
         TCNModel(
             model_name='TCN',
@@ -21,12 +21,12 @@ def tcn_model(look_back, horizon):
             dilation_base=4,
             likelihood=GaussianLikelihood(),
             random_state=0,
-            **utils.generate_torch_kwargs()
+            **utils.generate_torch_kwargs(gpu_idx)
         )
     )
 
 
-def nbeats_model(look_back, horizon):
+def nbeats_model(look_back, horizon, gpu_idx):
     return (
         NBEATSModel(
             model_name='NBEATS',
@@ -41,12 +41,12 @@ def nbeats_model(look_back, horizon):
             activation='LeakyReLU',
             dropout=0,
             random_state=0,
-            **utils.generate_torch_kwargs()
+            **utils.generate_torch_kwargs(gpu_idx)
         )
     )
 
 
-def deepar_model(look_back, horizon=None):
+def deepar_model(look_back, horizon, gpu_idx):
     return (
         RNNModel(
             model='LSTM',
@@ -62,13 +62,12 @@ def deepar_model(look_back, horizon=None):
             optimizer_kwargs={"lr": 1e-3},
             likelihood=GaussianLikelihood(),
             random_state=0,
-            **utils.generate_torch_kwargs()
+            **utils.generate_torch_kwargs(gpu_idx)
         )
     )
 
 
-# TODO: add this model to the main.py
-def lstm_model(look_back, horizon):
+def lstm_model(look_back, horizon, gpu_idx):
     return (
         BlockRNNModel(
             model='LSTM',
@@ -81,6 +80,6 @@ def lstm_model(look_back, horizon):
             n_rnn_layers=2,
             dropout=0,
             random_state=0,
-            **utils.generate_torch_kwargs()
+            **utils.generate_torch_kwargs(gpu_idx)
         )
     )

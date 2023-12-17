@@ -8,8 +8,8 @@ from typing import Dict, Union
 import os
 from tqdm import tqdm
 
-from src.config import config
 import src.utils as utils
+from src.utils import Config
 from src.framework__data_set import TimeSeriesDataSet
 
 
@@ -21,13 +21,9 @@ def format_number(number: float) -> str:
 def train_or_validate_one_epoch(epoch_idx: int,
                                 model: Union[TCNModel, NBEATSModel, RNNModel],
                                 data: TimeSeriesDataSet,
-                                look_back: int = config.look_back,
-                                transformation_method: str = config.transformation_method,
-                                scale_method: str = config.scale_method,
-                                is_train: bool = True,
-                                output_path: str = config.output_path,
-                                show_plots_flag: bool = True,
-                                limit: int = 1) -> Dict:
+                                look_back: int, transformation_method: str, scale_method: str,
+                                is_train: bool, output_path: str, show_plots_flag: bool,
+                                limit: int) -> Dict:
     """
     Train or validate the model one epoch through each dataframe, and record the epoch metrics.
     @param epoch_idx: number of the epoch
@@ -72,7 +68,6 @@ def train_or_validate_one_epoch(epoch_idx: int,
                                                                freq=darts_df_series.freq)
                               ) / 2
             noise = noise * noise_modulator
-            # darts_df_series.values = darts_df_series.values() + noise.values()
             darts_df_series = sum([noise, darts_df_series])
             covariates_dict[df_idx] = noise_modulator
 
@@ -95,7 +90,7 @@ def train_or_validate_one_epoch(epoch_idx: int,
         # num_samples is the number of samples to draw from the distribution
         # series is the series to predict from
 
-        num_samples = 1 if model.model_name == 'NBEATS' else 500
+        num_samples = 1 if model.model_name == 'LSTM' else 500
         if model.model_name == 'DeepAR':
             future_covariates = covariates_dict[df_idx]
 
@@ -111,9 +106,9 @@ def train_or_validate_one_epoch(epoch_idx: int,
         assert len(gt) == len(forecast)
         assert (gt.time_index == forecast.time_index).all()
 
-        series.values = data.re_transform_and_re_scale_data(series.values(), transformation_method, scale_method)
-        forecast.values = data.re_transform_and_re_scale_data(forecast.values(), transformation_method, scale_method)
-        gt.values = data.re_transform_and_re_scale_data(gt.values(), transformation_method, scale_method)
+        series.values = data.re_transform_and_re_scale_data(series.values())
+        forecast.values = data.re_transform_and_re_scale_data(forecast.values())
+        gt.values = data.re_transform_and_re_scale_data(gt.values())
 
         mae = darts.metrics.mae(gt, forecast)
         mape = darts.metrics.mape(gt, forecast)
@@ -167,7 +162,8 @@ def write_metrics_to_tensorboard(epoch_idx: int,
     @param val_writer: SummaryWriter object of the validation data
     @return None
     """
-    for metric in config.evaluation_metrics:
+    evaluation_metrics = ['mae', 'mape', 'mse', 'rmse']
+    for metric in evaluation_metrics:
         train_writer.add_scalar(metric, epoch_train_metrics_dict[metric], epoch_idx)
         val_writer.add_scalar(metric, epoch_val_metrics_dict[metric], epoch_idx)
 
@@ -175,12 +171,15 @@ def write_metrics_to_tensorboard(epoch_idx: int,
     val_writer.close()
 
 
-def print_metrics_in_table(epoch_idx: int, epoch_train_metrics_dict: Dict, epoch_val_metrics_dict: Dict) -> None:
+def print_metrics_in_table(epoch_train_metrics_dict: Dict, epoch_val_metrics_dict: Dict,
+                           epoch_idx: int, num_epochs: int, output_path: str) -> None:
     """
     Print the metrics of the epoch in a table.
-    @param epoch_idx: number of the epoch
     @param epoch_train_metrics_dict: dictionary of the computed metrics of the train data
     @param epoch_val_metrics_dict: dictionary of the computed metrics of the validation data
+    @param epoch_idx: number of the epoch
+    @param num_epochs: total number of epochs
+    @param output_path: path to the output directory
     @return None
     """
     results_data = [
@@ -197,44 +196,48 @@ def print_metrics_in_table(epoch_idx: int, epoch_train_metrics_dict: Dict, epoch
     ]
     headers = ["Data", "avg MAE", "avg MAPE", "avg MSE", "avg RMSE"]
 
-    print(f"Epoch {epoch_idx + 1}/{config.num_epochs} Results:")
+    print(f"Epoch {epoch_idx + 1}/{num_epochs} Results:")
     print(tabulate(results_data, headers=headers, tablefmt="pretty"))
-    utils.record_logs_to_txt(f"Epoch {epoch_idx + 1}/{config.num_epochs} Results:")
-    utils.record_logs_to_txt(tabulate(results_data, headers=headers, tablefmt="pretty"))
+    utils.record_logs_to_txt(f"Epoch {epoch_idx + 1}/{num_epochs} Results:", output_path)
+    utils.record_logs_to_txt(tabulate(results_data, headers=headers, tablefmt="pretty"), output_path)
 
 
 def plot_metrics(total_epochs_train_metrics_dict: Dict, total_epochs_val_metrics_dict: Dict,
-                 output_path: str = config.output_path, show_plots_flag: bool = True) -> None:
+                 output_path: str, model_name: str, show_plots_flag: bool = True) -> None:
     """
     Plot the metrics convergence across epochs.
     @param total_epochs_train_metrics_dict: dictionary of the computed metrics of the train data across epochs
     @param total_epochs_val_metrics_dict: dictionary of the computed metrics of the validation data across epochs
     @param output_path: path to the output directory
+    @param model_name: name of the model
     @param show_plots_flag: whether to show plots or not
     @return None
     """
-    for metric in config.evaluation_metrics:
+    evaluation_metrics = ['mae', 'mape', 'mse', 'rmse']
+    for metric in evaluation_metrics:
         train_values = [float(epoch_metrics[metric]) for epoch_metrics in total_epochs_train_metrics_dict.values()]
         val_values = [float(epoch_metrics[metric]) for epoch_metrics in total_epochs_val_metrics_dict.values()]
 
         plt.plot(train_values, color='blue', marker='o', label='train')
         plt.plot(val_values, color='orange', marker='s', label='val')
         plt.xticks(range(len(train_values)))
-        plt.title(f'({config.model_name}) {metric.upper()} across epochs')
+        plt.title(f'({model_name}) {metric.upper()} across epochs')
         plt.legend()
-        if output_path is not None:
-            plt.savefig(f"{output_path}/forecast_vs_actual/{metric}_convergence.png")
+        # if output_path is not None:
+        # plt.savefig(f"{output_path}/forecast_vs_actual/{metric}_convergence.png")
         if show_plots_flag:
             plt.show()
         plt.close()
 
 
 def train_and_validate(model: Union[TCNModel, NBEATSModel, RNNModel],
-                       data: TimeSeriesDataSet) -> Union[TCNModel, NBEATSModel, RNNModel]:
+                       data: TimeSeriesDataSet,
+                       config: Config) -> Union[TCNModel, NBEATSModel, RNNModel]:
     """
     Train and validate the model across epochs; record results and save best model.
     @param model: model to train and validate from the darts library
     @param data: time series data object
+    @param config: configuration object of the run
     @return model: trained model of the last epoch
     """
     utils.disable_pytorch_lightning_logging()
@@ -247,26 +250,34 @@ def train_and_validate(model: Union[TCNModel, NBEATSModel, RNNModel],
         train_writer = SummaryWriter(log_dir=f'{config.output_path}/tensorboard/train')
         val_writer = SummaryWriter(log_dir=f'{config.output_path}/tensorboard/val')
 
-        epoch_train_metrics_dict = train_or_validate_one_epoch(epoch_idx, model, data, is_train=True,
+        epoch_train_metrics_dict = train_or_validate_one_epoch(epoch_idx, model, data, look_back=config.look_back,
+                                                               transformation_method=config.transformation_method,
+                                                               scale_method=config.scale_method,
+                                                               is_train=True, output_path=config.output_path,
                                                                show_plots_flag=False, limit=1)
-        epoch_val_metrics_dict = train_or_validate_one_epoch(epoch_idx, model, data, is_train=False,
-                                                             show_plots_flag=False, limit=50)
+        epoch_val_metrics_dict = train_or_validate_one_epoch(epoch_idx, model, data, look_back=config.look_back,
+                                                             transformation_method=config.transformation_method,
+                                                             scale_method=config.scale_method,
+                                                             is_train=False, output_path=config.output_path,
+                                                             show_plots_flag=False, limit=10)
 
         # save best model based on validation mae
         # TODO: check if this is the best metric to save the model by
         epoch_val_mae = epoch_val_metrics_dict["mae"]
         if epoch_val_mae < val_mae_min:
             val_mae_min = epoch_val_mae
-            utils.save_model(model, model_name='model_best')
+            utils.save_model(model, model_name='model_best', output_path=config.output_path)
 
         write_metrics_to_tensorboard(epoch_idx, epoch_train_metrics_dict, epoch_val_metrics_dict,
                                      train_writer, val_writer)
 
-        print_metrics_in_table(epoch_idx, epoch_train_metrics_dict, epoch_val_metrics_dict)
+        print_metrics_in_table(epoch_train_metrics_dict, epoch_val_metrics_dict,
+                               epoch_idx, config.num_epochs, config.output_path)
 
         total_epochs_train_metrics_dict[epoch_idx] = epoch_train_metrics_dict
         total_epochs_val_metrics_dict[epoch_idx] = epoch_val_metrics_dict
 
-    plot_metrics(total_epochs_train_metrics_dict, total_epochs_val_metrics_dict, show_plots_flag=False)
+    plot_metrics(total_epochs_train_metrics_dict, total_epochs_val_metrics_dict,
+                 output_path=config.output_path, model_name=config.model_name, show_plots_flag=False)
 
     return model
