@@ -49,6 +49,10 @@ def save_config_to_file(output_path: str, config, filename='config.yml'):
     config_file_path = os.path.join(output_path, filename)
     with open(config_file_path, 'w') as config_file:
         yaml.dump(vars(config), config_file, default_flow_style=False)
+    record_logs_to_txt('\nConfig:', output_path)
+    for key, value in vars(config).items():
+        record_logs_to_txt(f'{key}: {value}', output_path)
+    record_logs_to_txt('\n', output_path)
 
 
 def record_logs_to_txt(txt: str, output_path: str) -> None:
