@@ -1,10 +1,10 @@
 import matplotlib.pyplot as plt
 from tabulate import tabulate
 import darts
-from darts.models import TCNModel, NBEATSModel, RNNModel
+from darts.models import TCNModel, NBEATSModel, RNNModel, BlockRNNModel
 import darts.utils.timeseries_generation as tg
 from torch.utils.tensorboard import SummaryWriter
-from typing import Dict, Union
+from typing import Dict, Union, Optional
 import os
 from tqdm import tqdm
 
@@ -18,11 +18,50 @@ def format_number(number: float) -> str:
     return f"{number:.4f}"
 
 
-def train_or_validate_one_epoch(epoch_idx: int,
-                                model: Union[TCNModel, NBEATSModel, RNNModel],
-                                data: TimeSeriesDataSet,
-                                look_back: int, transformation_method: str, scale_method: str,
-                                is_train: bool, output_path: str, show_plots_flag: bool,
+def plot_actual_vs_forecast(series, forecast, mode, epoch_idx, df_idx, mae, mape, mse, rmse, df_idx_output_path,
+                            show_plots_flag):
+    """
+    Plot the actual vs. forecasted values of the series.
+    @param series: the actual series (gt)
+    @param forecast: the forecasted series (predicted)
+    @param mode: train, validation or test
+    @param epoch_idx: number of the epoch
+    @param df_idx: the index of the dataframe
+    @param mae: mean absolute error
+    @param mape: mean absolute percentage error
+    @param mse: mean squared error
+    @param rmse: root mean squared error
+    @param df_idx_output_path: path to the output directory of the dataframe
+    @param show_plots_flag: whether to show plots or not
+    @return None
+    """
+    forecast.plot(label='forecast', color='blue', low_quantile=0.05, high_quantile=0.95, alpha=0.3)
+    series.plot(label='actual', color='black', linestyle='--')
+    if mode == 'test':
+        title = (f'{mode} forecasting (df={df_idx})\n'
+                 f'MAE={mae:.3f} '
+                 f'MAPE={mape:.3f} '
+                 f'MSE={mse:.3f} '
+                 f'RMSE={rmse:.3f}')
+    else:
+        title = (f'Epoch ({epoch_idx}) {mode} forecasting (df={df_idx})\n'
+                 f'MAE={mae:.3f} '
+                 f'MAPE={mape:.3f} '
+                 f'MSE={mse:.3f} '
+                 f'RMSE={rmse:.3f}')
+    plt.title(title)
+    plt.legend()
+    if df_idx_output_path is not None:
+        plt.savefig(f"{df_idx_output_path}/df_idx_{df_idx}_epoch_{epoch_idx}.png")
+    if show_plots_flag:
+        plt.show()
+    plt.close()
+
+
+def train_or_validate_one_epoch(epoch_idx: Optional[int],
+                                model: Union[TCNModel, NBEATSModel, RNNModel, BlockRNNModel],
+                                data: TimeSeriesDataSet, look_back: int,
+                                mode: str, output_path: str, show_plots_flag: bool,
                                 limit: int) -> Dict:
     """
     Train or validate the model one epoch through each dataframe, and record the epoch metrics.
@@ -30,17 +69,14 @@ def train_or_validate_one_epoch(epoch_idx: int,
     @param model: model to train on or predict from the darts library
     @param data: time series data object
     @param look_back: number of time steps to look back
-    @param transformation_method: transformation method for the data
-    @param scale_method: scale method for the data
-    @param is_train: whether the data is train or validation
+    @param mode: train, validation or test
     @param output_path: path to the output directory
     @param show_plots_flag: whether to show plots or not
-    # TODO: delete this it is only for debugging
     @param limit: limit the number of dataframes to train on or predict from
     @return: dictionary of the computed metrics of the epoch
     """
 
-    mode = "train" if is_train else "validation"
+    is_train = True if mode == 'train' else False
     data_dfs = data.get_train_time_series_data() if is_train else data.get_val_time_series_data()
 
     epoch_maes = []
@@ -49,12 +85,17 @@ def train_or_validate_one_epoch(epoch_idx: int,
     epoch_rmses = []
 
     series_dict = {}
+    deepar_series_dict = {}
     covariates_dict = {}
     for df_idx in data_dfs['source_df_idx'].unique()[:limit]:
 
         df_dataset = data_dfs[data_dfs['source_df_idx'] == df_idx]
         darts_df_series = darts.TimeSeries.from_dataframe(df_dataset, time_col='time', value_cols='sample')
+        series_dict[df_idx] = darts_df_series
+
         if model.model_name == 'DeepAR':
+            # maintain a copy of the original series for DeepAR
+            deepar_series_dict[df_idx] = darts_df_series
             noise = tg.gaussian_timeseries(std=0.6, start=darts_df_series.time_index[0],
                                            end=darts_df_series.time_index[-1], freq=darts_df_series.freq)
             noise_modulator = (
@@ -70,8 +111,7 @@ def train_or_validate_one_epoch(epoch_idx: int,
             noise = noise * noise_modulator
             darts_df_series = sum([noise, darts_df_series])
             covariates_dict[df_idx] = noise_modulator
-
-        series_dict[df_idx] = darts_df_series
+            series_dict[df_idx] = darts_df_series
 
     if is_train:
         if model.model_name == 'DeepAR':
@@ -97,11 +137,13 @@ def train_or_validate_one_epoch(epoch_idx: int,
             forecast = model.predict(n=len(series) - look_back,
                                      series=series[:look_back],
                                      future_covariates=future_covariates,
-                                     num_samples=500)
+                                     num_samples=num_samples,
+                                     num_loader_workers=8)
         else:
             forecast = model.predict(n=len(series) - look_back,
                                      series=series[:look_back],
-                                     num_samples=num_samples)
+                                     num_samples=num_samples,
+                                     num_loader_workers=8)
         gt = series[look_back:]
         assert len(gt) == len(forecast)
         assert (gt.time_index == forecast.time_index).all()
@@ -119,21 +161,15 @@ def train_or_validate_one_epoch(epoch_idx: int,
             main_output_path = f"{output_path}/forecast_vs_actual/{mode}"
             df_idx_output_path = f"{main_output_path}/df_idx_{df_idx}/"
             os.makedirs(df_idx_output_path, exist_ok=True)
+        else:
+            df_idx_output_path = None
 
-        forecast.plot(label='forecast', color='blue', low_quantile=0.05, high_quantile=0.95, alpha=0.2)
-        series.plot(label='actual', color='black', linestyle='--', alpha=0.5)
-        plt.title(f'Epoch ({epoch_idx}) {mode} Forecasting (df={df_idx})\n'
-                  f'MAE = {mae:.3f}'
-                  f' MAPE = {mape:.3f}'
-                  f' MSE = {mse:.3f}'
-                  f' RMSE = {rmse:.3f}')
-        plt.legend()
-        if output_path is not None:
-            plt.savefig(f"{df_idx_output_path}/df_idx_{df_idx}_epoch_{epoch_idx}.png")
-        if show_plots_flag:
-            plt.show()
-        plt.close()
+        if model.model_name == 'DeepAR':
+            # plot the original series (gt) and the forecasted series (predicted)
+            series = deepar_series_dict[df_idx]
 
+        plot_actual_vs_forecast(series, forecast, mode, epoch_idx, df_idx, mae, mape, mse, rmse, df_idx_output_path,
+                                show_plots_flag)
         epoch_maes.append(mae)
         epoch_mapes.append(mape)
         epoch_mses.append(mse)
@@ -223,8 +259,8 @@ def plot_metrics(total_epochs_train_metrics_dict: Dict, total_epochs_val_metrics
         plt.xticks(range(len(train_values)))
         plt.title(f'({model_name}) {metric.upper()} across epochs')
         plt.legend()
-        # if output_path is not None:
-        # plt.savefig(f"{output_path}/forecast_vs_actual/{metric}_convergence.png")
+        if output_path is not None:
+            plt.savefig(f"{output_path}/forecast_vs_actual/{metric}_convergence.png")
         if show_plots_flag:
             plt.show()
         plt.close()
@@ -232,7 +268,7 @@ def plot_metrics(total_epochs_train_metrics_dict: Dict, total_epochs_val_metrics
 
 def train_and_validate(model: Union[TCNModel, NBEATSModel, RNNModel],
                        data: TimeSeriesDataSet,
-                       config: Config) -> Union[TCNModel, NBEATSModel, RNNModel]:
+                       config: Config) -> Union[TCNModel, NBEATSModel, RNNModel, BlockRNNModel]:
     """
     Train and validate the model across epochs; record results and save best model.
     @param model: model to train and validate from the darts library
@@ -251,22 +287,11 @@ def train_and_validate(model: Union[TCNModel, NBEATSModel, RNNModel],
         val_writer = SummaryWriter(log_dir=f'{config.output_path}/tensorboard/val')
 
         epoch_train_metrics_dict = train_or_validate_one_epoch(epoch_idx, model, data, look_back=config.look_back,
-                                                               transformation_method=config.transformation_method,
-                                                               scale_method=config.scale_method,
-                                                               is_train=True, output_path=config.output_path,
+                                                               mode='train', output_path=config.output_path,
                                                                show_plots_flag=False, limit=1)
         epoch_val_metrics_dict = train_or_validate_one_epoch(epoch_idx, model, data, look_back=config.look_back,
-                                                             transformation_method=config.transformation_method,
-                                                             scale_method=config.scale_method,
-                                                             is_train=False, output_path=config.output_path,
+                                                             mode='validation', output_path=config.output_path,
                                                              show_plots_flag=False, limit=10)
-
-        # save best model based on validation mae
-        # TODO: check if this is the best metric to save the model by
-        epoch_val_mae = epoch_val_metrics_dict["mae"]
-        if epoch_val_mae < val_mae_min:
-            val_mae_min = epoch_val_mae
-            utils.save_model(model, model_name='model_best', output_path=config.output_path)
 
         write_metrics_to_tensorboard(epoch_idx, epoch_train_metrics_dict, epoch_val_metrics_dict,
                                      train_writer, val_writer)

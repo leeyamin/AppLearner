@@ -4,7 +4,7 @@ from darts.utils.likelihood_models import GaussianLikelihood
 import src.utils as utils
 
 
-def tcn_model(look_back, horizon, gpu_idx):
+def tcn_model(look_back, horizon, gpu_idx, output_path):
     return (
         TCNModel(
             model_name='TCN',
@@ -21,12 +21,14 @@ def tcn_model(look_back, horizon, gpu_idx):
             dilation_base=4,
             likelihood=GaussianLikelihood(),
             random_state=0,
-            **utils.generate_torch_kwargs(gpu_idx)
+            save_checkpoints=True,
+            work_dir=output_path,
+            **utils.generate_torch_kwargs(gpu_idx),
         )
     )
 
 
-def nbeats_model(look_back, horizon, gpu_idx):
+def nbeats_model(look_back, horizon, gpu_idx, output_path):
     return (
         NBEATSModel(
             model_name='NBEATS',
@@ -41,12 +43,14 @@ def nbeats_model(look_back, horizon, gpu_idx):
             activation='LeakyReLU',
             dropout=0,
             random_state=0,
+            save_checkpoints=True,
+            work_dir=output_path,
             **utils.generate_torch_kwargs(gpu_idx)
         )
     )
 
 
-def deepar_model(look_back, horizon, gpu_idx):
+def deepar_model(look_back, horizon, gpu_idx, output_path):
     return (
         RNNModel(
             model='LSTM',
@@ -62,12 +66,14 @@ def deepar_model(look_back, horizon, gpu_idx):
             optimizer_kwargs={"lr": 1e-3},
             likelihood=GaussianLikelihood(),
             random_state=0,
+            save_checkpoints=True,
+            work_dir=output_path,
             **utils.generate_torch_kwargs(gpu_idx)
         )
     )
 
 
-def lstm_model(look_back, horizon, gpu_idx):
+def lstm_model(look_back, horizon, gpu_idx, output_path):
     return (
         BlockRNNModel(
             model='LSTM',
@@ -80,6 +86,8 @@ def lstm_model(look_back, horizon, gpu_idx):
             n_rnn_layers=2,
             dropout=0,
             random_state=0,
+            save_checkpoints=True,
+            work_dir=output_path,
             **utils.generate_torch_kwargs(gpu_idx)
         )
     )

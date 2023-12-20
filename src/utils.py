@@ -1,22 +1,25 @@
 import torch
 import os
-from darts.logging import get_logger
 from typing import Union, Optional
-from darts.models import TCNModel, NBEATSModel, RNNModel
+from darts.models import TCNModel, NBEATSModel, RNNModel, BlockRNNModel
 import logging
 import yaml
+import warnings
 
 import src.models as models
+
+warnings.filterwarnings("ignore", category=UserWarning, module="pytorch_lightning.callbacks.model_checkpoint")
 
 
 class Config:
     """convert a dictionary to a class"""
+
     def __init__(self, **entries):
         self.__dict__.update(entries)
 
 
-def get_config():
-    with open('config.yml', 'r') as config_file:
+def get_config(config_path: str = 'config.yml'):
+    with open(config_path, 'r') as config_file:
         config = yaml.safe_load(config_file)
 
     config = Config(**config)
@@ -92,8 +95,8 @@ def generate_torch_kwargs(gpu_idx: int):
         }
 
 
-def get_model(model_name: str, look_back: int, horizon: int, gpu_idx: Optional[int], output_path: str) \
-        -> Union[TCNModel, NBEATSModel, RNNModel]:
+def get_model(model_name: str, look_back: int, horizon: int, gpu_idx: Optional[int], output_path: str,
+              trained_model_path: str) -> Union[TCNModel, NBEATSModel, RNNModel, BlockRNNModel]:
     """
     Get the configured model based on the model name.
     @param model_name: name of the model
@@ -101,46 +104,41 @@ def get_model(model_name: str, look_back: int, horizon: int, gpu_idx: Optional[i
     @param horizon: number of time steps to predict
     @param gpu_idx: index of the gpu to use (if available)
     @param output_path: path of output folder
+    @param trained_model_path: path of the trained model
     @return model: darts model
     """
+
+    if trained_model_path is not None:
+        assert model_name == trained_model_path.split('_')[0], "Model name and trained model path do not match."
+        main_dir = os.path.dirname(os.getcwd())
+        work_dir = os.path.join(main_dir, 'output', trained_model_path)
+        model = load_model(model_name=model_name, work_dir=work_dir)
+        if model is not None:
+            msg = f"Loading model from {os.path.join(work_dir, model_name, 'checkpoints', 'last.ckpt')}"
+            print(msg)
+            if output_path is not None:
+                record_logs_to_txt(f'\n{msg}', output_path)
+                record_logs_to_txt('\nModel:', output_path)
+                record_logs_to_txt(model, output_path)
+            return model
+
+    msg = f"Training from scratch."
+    print(msg)
+    record_logs_to_txt(f'\n{msg}', output_path)
     if model_name == "TCN":
-        model = models.tcn_model(look_back, horizon, gpu_idx)
+        model = models.tcn_model(look_back, horizon, gpu_idx, output_path)
     elif model_name == "NBEATS":
-        model = models.nbeats_model(look_back, horizon, gpu_idx)
+        model = models.nbeats_model(look_back, horizon, gpu_idx, output_path)
     elif model_name == "DeepAR":
-        model = models.deepar_model(look_back, horizon=None, gpu_idx=gpu_idx)
+        model = models.deepar_model(look_back, horizon=None, gpu_idx=gpu_idx, output_path=output_path)
     elif model_name == "LSTM":
-        model = models.lstm_model(look_back, horizon, gpu_idx)
+        model = models.lstm_model(look_back, horizon, gpu_idx, output_path)
     else:
-        raise NotImplementedError
+        raise NotImplementedError(f"Model {model_name} is not implemented.")
 
     if output_path is not None:
         record_logs_to_txt('\nModel:', output_path)
         record_logs_to_txt(model, output_path)
-
-    return model
-
-
-def load_model_if_exists(model: Union[TCNModel, NBEATSModel, RNNModel], trained_model_path: str) \
-        -> Union[TCNModel, NBEATSModel, RNNModel]:
-    """
-    Load model weights if the model path exists.
-    @param model: predefined darts model
-    @param trained_model_path: path to the trained model weights
-    @return model: trained darts model
-    """
-
-    logger = get_logger(__name__)
-
-    if trained_model_path is not None:
-        if os.path.exists(trained_model_path):
-            if os.path.exists(trained_model_path):
-                logger.info(f"Loading model weights from {trained_model_path}")
-                model.load(trained_model_path)
-            else:
-                logger.warning("Weights file not found. Training from scratch.")
-        else:
-            logger.warning("Trained model path does not exist. Training from scratch.")
 
     return model
 
@@ -150,7 +148,26 @@ def disable_pytorch_lightning_logging() -> None:
     logging.getLogger("pytorch_lightning").setLevel(logging.WARNING)
 
 
-def save_model(model: Union[TCNModel, NBEATSModel, RNNModel], model_name: str, output_path: str) -> None:
-    """Save model weights to the output folder."""
-    model.save(os.path.join(f'{output_path}', f'{model_name}.pth'))
-    print("Model weights saved.")
+def load_model(model_name, work_dir, file_name='last-epoch=0.ckpt'):
+    """
+    Load a model from a checkpoint that was automatically saved by pytorch lightning (darts).
+    @param model_name: name of the model: TCN, NBEATS, RNN, LSTM
+    @param work_dir: path of the output folder as set in work_dir in the model configuration
+    @param file_name: name of the checkpoint file, default is 'last-epoch=0.ckpt' which is the last checkpoint
+    """
+
+    model_classes = {
+        'TCN': TCNModel,
+        'NBEATS': NBEATSModel,
+        'DeepAR': RNNModel,
+        'LSTM': BlockRNNModel
+    }
+    assert model_name in model_classes, f"Unsupported model name: {model_name}"
+    assert os.path.exists(work_dir), f"Work directory does not exist: {work_dir}"
+    assert os.path.exists(os.path.join(work_dir, model_name, 'checkpoints', file_name))
+
+    print(f"Loading model from {os.path.join(work_dir, model_name, 'checkpoints', file_name)}")
+    model_class = model_classes[model_name]
+    model = model_class.load_from_checkpoint(model_name=model_name, work_dir=work_dir, file_name=file_name)
+
+    return model

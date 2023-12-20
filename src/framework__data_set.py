@@ -143,9 +143,6 @@ class TimeSeriesDataSet:
         """Set the time series data according to the concatenated data frames with the relevant columns."""
         self.time_series_data = self.dfs_concatenated[['sample', 'time', 'source_df_idx']]
 
-    def get_time_series_data(self):
-        return self.time_series_data
-
     def prepare_data_for_run(self, output_path, record_logs_to_txt=True):
         """Prepare data for run; filter data that is too short,
         subsample the data, concatenate the data frames and set."""
