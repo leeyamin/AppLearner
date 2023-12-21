@@ -45,7 +45,7 @@ class TimeSeriesDataSet:
         self.scale_method = config.scale_method
         self.train_ratio = config.train_ratio
 
-    def sub_sample_data(self) -> None:
+    def _sub_sample_data(self) -> None:
         """
         Subsample the data by a specified rate and aggregation type.
         """
@@ -105,10 +105,10 @@ class TimeSeriesDataSet:
     def get_val_time_series_data(self):
         return self.val_time_series_data
 
-    def set_train_time_series_data_samples(self, train_time_series_data):
+    def _set_train_time_series_data_samples(self, train_time_series_data):
         self.train_time_series_data['sample'] = train_time_series_data.squeeze()
 
-    def set_val_time_series_data_samples(self, val_time_series_data):
+    def _set_val_time_series_data_samples(self, val_time_series_data):
         self.val_time_series_data['sample'] = val_time_series_data.squeeze()
 
     def split_to_train_and_test(self):
@@ -130,16 +130,16 @@ class TimeSeriesDataSet:
         self.train_time_series_data = train_data
         self.val_time_series_data = val_data
 
-    def record_df_indices(self):
+    def _record_df_indices(self):
         """Add a column to each dataframe that indicates the index of the dataframe in the list of dataframes."""
         for idx, df in enumerate(self.list_of_df):
             df['source_df_idx'] = idx
 
-    def concatenate_dfs(self):
+    def _concatenate_dfs(self):
         """Concatenate the data frames into one data frame."""
         self.dfs_concatenated = pd.concat(self.list_of_df)
 
-    def set_time_series_data(self):
+    def _set_time_series_data(self):
         """Set the time series data according to the concatenated data frames with the relevant columns."""
         self.time_series_data = self.dfs_concatenated[['sample', 'time', 'source_df_idx']]
 
@@ -153,23 +153,23 @@ class TimeSeriesDataSet:
         msg = f"Subsampling data from 1 sample per 1 minute to 1 sample per {self.sub_sample_rate} minutes."
         print(msg)
         utils.record_logs_to_txt(msg, output_path) if record_logs_to_txt else None
-        self.sub_sample_data()
+        self._sub_sample_data()
 
-        self.record_df_indices()
-        self.concatenate_dfs()
+        self._record_df_indices()
+        self._concatenate_dfs()
 
-        self.set_time_series_data()
+        self._set_time_series_data()
 
-    def transform_data(self) -> None:
+    def _transform_data(self) -> None:
         """Transform the data using the specified method. Currently only supports log transformation."""
         if self.transformation_method == 'log':
             epsilon = 1e-8
-            self.set_train_time_series_data_samples(np.log(self.train_time_series_data['sample'] + epsilon))
-            self.set_val_time_series_data_samples(np.log(self.val_time_series_data['sample'] + epsilon))
+            self._set_train_time_series_data_samples(np.log(self.train_time_series_data['sample'] + epsilon))
+            self._set_val_time_series_data_samples(np.log(self.val_time_series_data['sample'] + epsilon))
         else:
             raise NotImplementedError(f"transformation_method = {self.transformation_method} is not supported")
 
-    def scale_data(self, scale_method: str) -> None:
+    def _scale_data(self, scale_method: str) -> None:
         """
         Scale the data using the specified method. Currently only supports min-max scaling.
         @param scale_method: the method of scaling to use. currently supports: min-max.
@@ -183,8 +183,8 @@ class TimeSeriesDataSet:
             scaled_train_samples = self.scaler.transform(self.train_time_series_data['sample'].values.reshape(-1, 1))
             scaled_val_samples = self.scaler.transform(self.val_time_series_data['sample'].values.reshape(-1, 1))
 
-            self.set_train_time_series_data_samples(scaled_train_samples)
-            self.set_val_time_series_data_samples(scaled_val_samples)
+            self._set_train_time_series_data_samples(scaled_train_samples)
+            self._set_val_time_series_data_samples(scaled_val_samples)
         else:
             raise NotImplementedError(f"scale_method = {scale_method} is not supported")
 
@@ -195,11 +195,11 @@ class TimeSeriesDataSet:
         if self.transformation_method is None and self.scale_method is None:
             return
         if self.transformation_method is not None:
-            self.transform_data(self.transformation_method)
+            self._transform_data()
         if self.scale_method is not None:
-            self.scale_data(self.scale_method)
+            self._scale_data()
 
-    def re_scale_data(self, darts_values: np.ndarray[np.float64]):
+    def _re_scale_data(self, darts_values: np.ndarray[np.float64]):
         """
         Rescale the data.
         @param darts_values: the values to rescale (in darts format)
@@ -211,7 +211,7 @@ class TimeSeriesDataSet:
             raise NotImplementedError(f"scale_method = {self.scale_method} is not supported")
         return re_scaled_darts_values
 
-    def re_transform_data(self, darts_values: np.ndarray[np.float64]):
+    def _re_transform_data(self, darts_values: np.ndarray[np.float64]):
         """
         Reverse transforms the data using the specified method.
         @param darts_values: the values to rescale (in darts format)
@@ -233,9 +233,9 @@ class TimeSeriesDataSet:
         if self.transformation_method is None and self.scale_method is None:
             return darts_values
         if self.scale_method is not None:
-            darts_values = self.re_scale_data(darts_values)
+            darts_values = self._re_scale_data(darts_values)
         if self.transformation_method is not None:
-            darts_values = self.re_transform_data(darts_values)
+            darts_values = self._re_transform_data(darts_values)
         return darts_values
 
 
