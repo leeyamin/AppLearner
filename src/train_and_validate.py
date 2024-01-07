@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 from tabulate import tabulate
 import darts
 from darts.models import TCNModel, NBEATSModel, RNNModel, BlockRNNModel
-import darts.utils.timeseries_generation as tg
 from torch.utils.tensorboard import SummaryWriter
 from typing import Dict, Union, Optional
 import os
@@ -87,70 +86,28 @@ def train_or_validate_one_epoch(epoch_idx: Optional[int],
     epoch_rmses = []
 
     series_dict = {}
-    deepar_series_dict = {}
-    covariates_dict = {}
 
     unique_values = data_dfs['source_df_idx'].unique()[:limit] if limit is not None else data_dfs[
         'source_df_idx'].unique()
     for df_idx in unique_values:
-
         df_dataset = data_dfs[data_dfs['source_df_idx'] == df_idx]
         darts_df_series = darts.TimeSeries.from_dataframe(df_dataset, time_col='time', value_cols='sample')
         series_dict[df_idx] = darts_df_series
 
-        if model.model_name == 'DeepAR':
-            # maintain a copy of the original series for DeepAR
-            deepar_series_dict[df_idx] = darts_df_series
-            noise = tg.gaussian_timeseries(std=0.6, start=darts_df_series.time_index[0],
-                                           end=darts_df_series.time_index[-1], freq=darts_df_series.freq)
-            noise_modulator = (
-                                      tg.sine_timeseries(value_frequency=0.02,
-                                                         start=darts_df_series.time_index[0],
-                                                         end=darts_df_series.time_index[-1],
-                                                         freq=darts_df_series.freq)
-                                      + tg.constant_timeseries(value=1,
-                                                               start=darts_df_series.time_index[0],
-                                                               end=darts_df_series.time_index[-1],
-                                                               freq=darts_df_series.freq)
-                              ) / 2
-            noise = noise * noise_modulator
-            darts_df_series = sum([noise, darts_df_series])
-            covariates_dict[df_idx] = noise_modulator
-            series_dict[df_idx] = darts_df_series
-
     if is_train:
-        if model.model_name == 'DeepAR':
-            assert sum(len(series) for series in series_dict.values()) == sum(
-                len(series) for series in covariates_dict.values())
-            model.fit(series=list(series_dict.values()), verbose=True,
-                      future_covariates=list(covariates_dict.values()))
-        else:
-            model.fit(series=list(series_dict.values()), verbose=True, past_covariates=None)
+        model.fit(series=list(series_dict.values()), verbose=True, past_covariates=None)
+
         # TODO: if DeepTCN is implemented
         #  (see https://github.com/unit8co/darts/blob/master/examples/09-DeepTCN-examples.ipynb)
         # model.fit(series=darts_train_dataset, verbose=False, past_covariates=list(covariates_dict.values())
 
     for df_idx, series in tqdm(series_dict.items(), total=len(series_dict), leave=True, position=0, desc=mode):
-        # n is the number of time steps to predict
-        # num_samples is the number of samples to draw from the distribution
-        # series is the series to predict from
-
         num_samples = 1 if model.model_name == 'LSTM' else 500
-        if model.model_name == 'DeepAR':
-            future_covariates = covariates_dict[df_idx]
-
-            forecast = model.predict(n=len(series) - look_back,
-                                     series=series[:look_back],
-                                     future_covariates=future_covariates,
-                                     num_samples=num_samples,
-                                     num_loader_workers=4,
-                                     verbose=False)
-        else:
-            forecast = model.predict(n=len(series) - look_back,
-                                     series=series[:look_back],
-                                     num_samples=num_samples,
-                                     num_loader_workers=4,
-                                     verbose=False)
+        forecast = model.predict(n=len(series) - look_back,  # number of time steps to predict
+                                 series=series[:look_back],  # series to predict from
+                                 num_samples=num_samples,  # number of samples to draw from the distribution
+                                 num_loader_workers=4,
+                                 verbose=False)
         gt = series[look_back:]
         assert len(gt) == len(forecast)
         assert (gt.time_index == forecast.time_index).all()
@@ -170,10 +127,6 @@ def train_or_validate_one_epoch(epoch_idx: Optional[int],
             os.makedirs(df_idx_output_path, exist_ok=True)
         else:
             df_idx_output_path = None
-
-        if model.model_name == 'DeepAR':
-            # plot the original series (gt) and the forecasted series (predicted)
-            series = deepar_series_dict[df_idx]
 
         plot_actual_vs_forecast(series, forecast, mode, epoch_idx, df_idx, mae, mape, mse, rmse, df_idx_output_path,
                                 show_plots_flag)
