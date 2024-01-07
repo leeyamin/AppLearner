@@ -169,13 +169,9 @@ class TimeSeriesDataSet:
         else:
             raise NotImplementedError(f"transformation_method = {self.transformation_method} is not supported")
 
-    def _scale_data(self, scale_method: str) -> None:
-        """
-        Scale the data using the specified method. Currently only supports min-max scaling.
-        @param scale_method: the method of scaling to use. currently supports: min-max.
-        @return None
-        """
-        if scale_method == 'min-max':
+    def _scale_data(self) -> None:
+        """Scale the data using the specified method. Currently only supports min-max scaling."""
+        if self.scale_method == 'min-max':
             if self.scaler is None:
                 self.scaler = MinMaxScaler()
                 self.scaler.fit(self.train_time_series_data['sample'].values.reshape(-1, 1))
@@ -186,7 +182,7 @@ class TimeSeriesDataSet:
             self._set_train_time_series_data_samples(scaled_train_samples)
             self._set_val_time_series_data_samples(scaled_val_samples)
         else:
-            raise NotImplementedError(f"scale_method = {scale_method} is not supported")
+            raise NotImplementedError(f"scale_method = {self.scale_method} is not supported")
 
     def transform_and_scale_data(self) -> None:
         """

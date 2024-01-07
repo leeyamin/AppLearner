@@ -52,7 +52,8 @@ def plot_actual_vs_forecast(series, forecast, mode, epoch_idx, df_idx, mae, mape
     plt.title(title)
     plt.legend()
     if df_idx_output_path is not None:
-        plt.savefig(f"{df_idx_output_path}/df_idx_{df_idx}_epoch_{epoch_idx}.png")
+        if df_idx % 100 == 0:
+            plt.savefig(f"{df_idx_output_path}/df_idx_{df_idx}_epoch_{epoch_idx}.png")
     if show_plots_flag:
         plt.show()
     plt.close()
@@ -62,7 +63,7 @@ def train_or_validate_one_epoch(epoch_idx: Optional[int],
                                 model: Union[TCNModel, NBEATSModel, RNNModel, BlockRNNModel],
                                 data: TimeSeriesDataSet, look_back: int,
                                 mode: str, output_path: str, show_plots_flag: bool,
-                                limit: int) -> Dict:
+                                limit: Optional[int] = None) -> Dict:
     """
     Train or validate the model one epoch through each dataframe, and record the epoch metrics.
     @param epoch_idx: number of the epoch
@@ -77,6 +78,7 @@ def train_or_validate_one_epoch(epoch_idx: Optional[int],
     """
 
     is_train = True if mode == 'train' else False
+    print('Training...' if is_train else '\nValidating...')
     data_dfs = data.get_train_time_series_data() if is_train else data.get_val_time_series_data()
 
     epoch_maes = []
@@ -87,7 +89,10 @@ def train_or_validate_one_epoch(epoch_idx: Optional[int],
     series_dict = {}
     deepar_series_dict = {}
     covariates_dict = {}
-    for df_idx in data_dfs['source_df_idx'].unique()[:limit]:
+
+    unique_values = data_dfs['source_df_idx'].unique()[:limit] if limit is not None else data_dfs[
+        'source_df_idx'].unique()
+    for df_idx in unique_values:
 
         df_dataset = data_dfs[data_dfs['source_df_idx'] == df_idx]
         darts_df_series = darts.TimeSeries.from_dataframe(df_dataset, time_col='time', value_cols='sample')
@@ -117,10 +122,10 @@ def train_or_validate_one_epoch(epoch_idx: Optional[int],
         if model.model_name == 'DeepAR':
             assert sum(len(series) for series in series_dict.values()) == sum(
                 len(series) for series in covariates_dict.values())
-            model.fit(series=list(series_dict.values()), verbose=False,
+            model.fit(series=list(series_dict.values()), verbose=True,
                       future_covariates=list(covariates_dict.values()))
         else:
-            model.fit(series=list(series_dict.values()), verbose=False, past_covariates=None)
+            model.fit(series=list(series_dict.values()), verbose=True, past_covariates=None)
         # TODO: if DeepTCN is implemented
         #  (see https://github.com/unit8co/darts/blob/master/examples/09-DeepTCN-examples.ipynb)
         # model.fit(series=darts_train_dataset, verbose=False, past_covariates=list(covariates_dict.values())
@@ -138,12 +143,14 @@ def train_or_validate_one_epoch(epoch_idx: Optional[int],
                                      series=series[:look_back],
                                      future_covariates=future_covariates,
                                      num_samples=num_samples,
-                                     num_loader_workers=8)
+                                     num_loader_workers=4,
+                                     verbose=False)
         else:
             forecast = model.predict(n=len(series) - look_back,
                                      series=series[:look_back],
                                      num_samples=num_samples,
-                                     num_loader_workers=8)
+                                     num_loader_workers=4,
+                                     verbose=False)
         gt = series[look_back:]
         assert len(gt) == len(forecast)
         assert (gt.time_index == forecast.time_index).all()
@@ -279,7 +286,7 @@ def train_and_validate(model: Union[TCNModel, NBEATSModel, RNNModel],
     utils.disable_pytorch_lightning_logging()
     total_epochs_train_metrics_dict = {}
     total_epochs_val_metrics_dict = {}
-    val_mae_min = float('inf')
+
     for epoch_idx in range(config.num_epochs):
         print(f"Epoch {epoch_idx + 1}/{config.num_epochs}")
 
@@ -288,10 +295,10 @@ def train_and_validate(model: Union[TCNModel, NBEATSModel, RNNModel],
 
         epoch_train_metrics_dict = train_or_validate_one_epoch(epoch_idx, model, data, look_back=config.look_back,
                                                                mode='train', output_path=config.output_path,
-                                                               show_plots_flag=False, limit=1)
+                                                               show_plots_flag=False, limit=100)
         epoch_val_metrics_dict = train_or_validate_one_epoch(epoch_idx, model, data, look_back=config.look_back,
                                                              mode='validation', output_path=config.output_path,
-                                                             show_plots_flag=False, limit=10)
+                                                             show_plots_flag=False, limit=100)
 
         write_metrics_to_tensorboard(epoch_idx, epoch_train_metrics_dict, epoch_val_metrics_dict,
                                      train_writer, val_writer)

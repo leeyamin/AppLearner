@@ -19,7 +19,6 @@ if __name__ == '__main__':
 
     data.set_configurations(config)
     data.prepare_data_for_run(config.output_path, record_logs_to_txt=True)
-
     data.split_to_train_and_test()
     data.transform_and_scale_data()
 
