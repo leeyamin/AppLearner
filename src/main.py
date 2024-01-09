@@ -8,7 +8,7 @@ warnings.filterwarnings("ignore", category=UserWarning, message="MPS available b
 
 if __name__ == '__main__':
     config = utils.get_config()
-    config.output_path = utils.get_output_path(config.model_name)
+    config.output_path = utils.get_output_path(config.run_name, config.model_name)
     utils.save_config_to_file(config.output_path, config)
 
     data = framework__data_set.get_data_set(

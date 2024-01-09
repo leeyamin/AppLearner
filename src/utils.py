@@ -27,12 +27,19 @@ def get_config(config_path: str = 'config.yml'):
     return config
 
 
-def get_output_path(model_name: str) -> str:
+def get_output_path(run_name: Optional[str], model_name: str) -> str:
     """
     Get the output path for a specific run as the first available index in the output folder based on the model name.
+    @param run_name: optionally predefined run name
     @param model_name: the name of the model
     @return output_path: the path to the output folder
     """
+    if run_name is not None:
+        output_path = f"../output/{run_name}"
+        if not os.path.exists(output_path):
+            return output_path
+        else:
+            raise ValueError(f"Run name {run_name} already exists.")
     idx = 0
     while True:
         output_path = f"../output/{model_name}_{idx}"
