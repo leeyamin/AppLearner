@@ -1,3 +1,5 @@
+import time
+
 import src.framework__data_set as framework__data_set
 import src.utils as utils
 import src.train_and_validate as train_and_validate
@@ -7,6 +9,7 @@ warnings.filterwarnings("ignore", category=UserWarning, message="MPS available b
 
 
 if __name__ == '__main__':
+    start_time = time.time()
     config = utils.get_config()
     config.output_path = utils.get_output_path(config.run_name, config.model_name)
     utils.save_config_to_file(config.output_path, config)
@@ -26,3 +29,5 @@ if __name__ == '__main__':
                             config.output_path, config.trained_model_path)
     model.log_every_n_steps = 1  # handles a warning
     model = train_and_validate.train_and_validate(model, data, config)
+    print('Run time: ', time.time() - start_time)
+    print('Done.')
