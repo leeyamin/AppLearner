@@ -6,6 +6,7 @@ from torch.utils.tensorboard import SummaryWriter
 from typing import Dict, Union, Optional
 import os
 from tqdm import tqdm
+import time
 
 import src.utils as utils
 from src.utils import Config
@@ -51,7 +52,8 @@ def plot_actual_vs_forecast(series, forecast, mode, epoch_idx, df_idx, mae, mape
     plt.title(title)
     plt.legend()
     if df_idx_output_path is not None:
-        if df_idx % 100 == 0:
+        # TODO: when resources are available, save all plots.
+        if df_idx % 5 == 0:
             plt.savefig(f"{df_idx_output_path}/df_idx_{df_idx}_epoch_{epoch_idx}.png")
     if show_plots_flag:
         plt.show()
@@ -241,6 +243,7 @@ def train_and_validate(model: Union[TCNModel, NBEATSModel, RNNModel],
     total_epochs_val_metrics_dict = {}
 
     for epoch_idx in range(config.num_epochs):
+        epoch_start_time = time.time()
         print(f"Epoch {epoch_idx + 1}/{config.num_epochs}")
 
         train_writer = SummaryWriter(log_dir=f'{config.output_path}/tensorboard/train')
@@ -248,10 +251,10 @@ def train_and_validate(model: Union[TCNModel, NBEATSModel, RNNModel],
 
         epoch_train_metrics_dict = train_or_validate_one_epoch(epoch_idx, model, data, look_back=config.look_back,
                                                                mode='train', output_path=config.output_path,
-                                                               show_plots_flag=False, limit=100)
+                                                               show_plots_flag=False, limit=20)
         epoch_val_metrics_dict = train_or_validate_one_epoch(epoch_idx, model, data, look_back=config.look_back,
                                                              mode='validation', output_path=config.output_path,
-                                                             show_plots_flag=False, limit=100)
+                                                             show_plots_flag=False, limit=20)
 
         write_metrics_to_tensorboard(epoch_idx, epoch_train_metrics_dict, epoch_val_metrics_dict,
                                      train_writer, val_writer)
@@ -261,6 +264,8 @@ def train_and_validate(model: Union[TCNModel, NBEATSModel, RNNModel],
 
         total_epochs_train_metrics_dict[epoch_idx] = epoch_train_metrics_dict
         total_epochs_val_metrics_dict[epoch_idx] = epoch_val_metrics_dict
+
+        print(f'Epoch time: {((time.time() - epoch_start_time) / 60):.3f} minutes')
 
     plot_metrics(total_epochs_train_metrics_dict, total_epochs_val_metrics_dict,
                  output_path=config.output_path, model_name=config.model_name, show_plots_flag=False)

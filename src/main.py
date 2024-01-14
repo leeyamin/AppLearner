@@ -29,5 +29,5 @@ if __name__ == '__main__':
                             config.output_path, config.trained_model_path)
     model.log_every_n_steps = 1  # handles a warning
     model = train_and_validate.train_and_validate(model, data, config)
-    print('Run time: ', time.time() - start_time)
+    print(f'Run time: {((time.time() - start_time) / 3600):.3f} hours')
     print('Done.')
