@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 from tabulate import tabulate
 import darts
 from darts.models import TCNModel, NBEATSModel, RNNModel, BlockRNNModel
@@ -7,6 +8,7 @@ from typing import Dict, Union, Optional
 import os
 from tqdm import tqdm
 import time
+import pandas as pd
 
 import src.utils as utils
 from src.utils import Config
@@ -199,13 +201,14 @@ def print_metrics_in_table(epoch_train_metrics_dict: Dict, epoch_val_metrics_dic
 
 
 def plot_metrics(total_epochs_train_metrics_dict: Dict, total_epochs_val_metrics_dict: Dict,
-                 output_path: str, model_name: str, show_plots_flag: bool = True) -> None:
+                 output_path: str, model_name: str, mae_best_val: float, show_plots_flag: bool = True) -> None:
     """
     Plot the metrics convergence across epochs.
     @param total_epochs_train_metrics_dict: dictionary of the computed metrics of the train data across epochs
     @param total_epochs_val_metrics_dict: dictionary of the computed metrics of the validation data across epochs
     @param output_path: path to the output directory
     @param model_name: name of the model
+    @param mae_best_val: best validation MAE
     @param show_plots_flag: whether to show plots or not
     @return None
     """
@@ -217,13 +220,37 @@ def plot_metrics(total_epochs_train_metrics_dict: Dict, total_epochs_val_metrics
         plt.plot(train_values, color='blue', marker='o', label='train')
         plt.plot(val_values, color='orange', marker='s', label='val')
         plt.xticks(range(len(train_values)))
+        plt.ylim(0, None)
+        if mae_best_val != float('inf'):
+            best_epoch_idx = np.argmin(val_values)
+            plt.axvline(x=best_epoch_idx, color='red', linestyle='--', label=f'best {metric} val')
         plt.title(f'({model_name}) {metric.upper()} across epochs')
         plt.legend()
         if output_path is not None:
-            plt.savefig(f"{output_path}/forecast_vs_actual/{metric}_convergence.png")
+            plt.savefig(f"{output_path}/{metric}_convergence.png")
         if show_plots_flag:
             plt.show()
         plt.close()
+
+
+def save_metrics_to_csv(metrics_dict, epoch_idx, output_path, filename, is_best_val=False):
+    if not is_best_val:
+        for key, value in metrics_dict.items():
+            for k, v in value.items():
+                metrics_dict[key][k] = round(v, 4)
+
+    if is_best_val:
+        metrics_dict['epoch_idx'] = epoch_idx
+
+    os.makedirs(output_path, exist_ok=True)
+    csv_file_path = os.path.join(output_path, f'{filename}.csv')
+
+    if is_best_val:
+        df = pd.DataFrame([metrics_dict])
+    else:
+        df = pd.DataFrame(metrics_dict).T
+
+    df.to_csv(csv_file_path, header=True)
 
 
 def train_and_validate(model: Union[TCNModel, NBEATSModel, RNNModel],
@@ -240,6 +267,7 @@ def train_and_validate(model: Union[TCNModel, NBEATSModel, RNNModel],
     total_epochs_train_metrics_dict = {}
     total_epochs_val_metrics_dict = {}
 
+    mae_best_val = float('inf')
     for epoch_idx in range(config.num_epochs):
         epoch_start_time = time.time()
         print(f"Epoch {epoch_idx + 1}/{config.num_epochs}")
@@ -249,10 +277,10 @@ def train_and_validate(model: Union[TCNModel, NBEATSModel, RNNModel],
 
         epoch_train_metrics_dict = train_or_validate_one_epoch(epoch_idx, model, data, look_back=config.look_back,
                                                                mode='train', output_path=config.output_path,
-                                                               show_plots_flag=False, limit=20)
+                                                               show_plots_flag=False, limit=1)
         epoch_val_metrics_dict = train_or_validate_one_epoch(epoch_idx, model, data, look_back=config.look_back,
                                                              mode='validation', output_path=config.output_path,
-                                                             show_plots_flag=False, limit=20)
+                                                             show_plots_flag=False, limit=1)
 
         write_metrics_to_tensorboard(epoch_idx, epoch_train_metrics_dict, epoch_val_metrics_dict,
                                      train_writer, val_writer)
@@ -263,11 +291,19 @@ def train_and_validate(model: Union[TCNModel, NBEATSModel, RNNModel],
         total_epochs_train_metrics_dict[epoch_idx] = epoch_train_metrics_dict
         total_epochs_val_metrics_dict[epoch_idx] = epoch_val_metrics_dict
 
+        save_metrics_to_csv(total_epochs_train_metrics_dict, epoch_idx, config.output_path, 'train_metrics')
+        save_metrics_to_csv(total_epochs_val_metrics_dict, epoch_idx, config.output_path, 'val_metrics')
+
+        if float(epoch_val_metrics_dict['mae']) < mae_best_val:
+            mae_best_val = float(epoch_val_metrics_dict['mae'])
+            save_metrics_to_csv(epoch_val_metrics_dict, epoch_idx, config.output_path, 'best_val_metrics',
+                                is_best_val=True)
+
+        plot_metrics(total_epochs_train_metrics_dict, total_epochs_val_metrics_dict,
+                     config.output_path, config.model_name, mae_best_val, show_plots_flag=False)
+
         print(f'Epoch time: {((time.time() - epoch_start_time) / 60):.3f} minutes')
         utils.record_logs_to_txt(f'Epoch time: {((time.time() - epoch_start_time) / 60):.3f} minutes',
                                  config.output_path)
-
-    plot_metrics(total_epochs_train_metrics_dict, total_epochs_val_metrics_dict, config.output_path, config.model_name,
-                 show_plots_flag=False)
 
     return model
