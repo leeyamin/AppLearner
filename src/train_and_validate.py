@@ -52,9 +52,7 @@ def plot_actual_vs_forecast(series, forecast, mode, epoch_idx, df_idx, mae, mape
     plt.title(title)
     plt.legend()
     if df_idx_output_path is not None:
-        # TODO: when resources are available, save all plots.
-        if df_idx % 5 == 0:
-            plt.savefig(f"{df_idx_output_path}/df_idx_{df_idx}_epoch_{epoch_idx}.png")
+        plt.savefig(f"{df_idx_output_path}/df_idx_{df_idx}_epoch_{epoch_idx}.png")
     if show_plots_flag:
         plt.show()
     plt.close()
@@ -266,8 +264,10 @@ def train_and_validate(model: Union[TCNModel, NBEATSModel, RNNModel],
         total_epochs_val_metrics_dict[epoch_idx] = epoch_val_metrics_dict
 
         print(f'Epoch time: {((time.time() - epoch_start_time) / 60):.3f} minutes')
+        utils.record_logs_to_txt(f'Epoch time: {((time.time() - epoch_start_time) / 60):.3f} minutes',
+                                 config.output_path)
 
-    plot_metrics(total_epochs_train_metrics_dict, total_epochs_val_metrics_dict,
-                 output_path=config.output_path, model_name=config.model_name, show_plots_flag=False)
+    plot_metrics(total_epochs_train_metrics_dict, total_epochs_val_metrics_dict, config.output_path, config.model_name,
+                 show_plots_flag=False)
 
     return model
