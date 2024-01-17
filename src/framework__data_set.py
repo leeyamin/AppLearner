@@ -26,7 +26,6 @@ class TimeSeriesDataSet:
         self.data_length_limit_in_minutes = None
         self.transformation_method = None
         self.scale_method = None
-        self.train_ratio = None
 
     def get_list(self):
         return self.list_of_df
@@ -43,7 +42,6 @@ class TimeSeriesDataSet:
         self.data_length_limit_in_minutes = config.data_length_limit_in_minutes
         self.transformation_method = config.transformation_method
         self.scale_method = config.scale_method
-        self.train_ratio = config.train_ratio
 
     def _sub_sample_data(self) -> None:
         """
@@ -115,11 +113,11 @@ class TimeSeriesDataSet:
         """Split the data into train and test sets according to a specified train ratio.
         The splitting is made upon the shuffled data frames, and not the samples."""
         num_dfs = len(self.time_series_data['source_df_idx'].unique())
-        num_dfs_train = int(num_dfs * self.train_ratio)
+        train_ratio = 0.8
+        num_dfs_train = int(num_dfs * train_ratio)
 
         # shuffle between dfs indices (not within dfs)
         unique_indices = self.time_series_data['source_df_idx'].unique()
-        np.random.seed(42)
         np.random.shuffle(unique_indices)
         train_indices = unique_indices[:num_dfs_train]
         val_indices = unique_indices[num_dfs_train:]

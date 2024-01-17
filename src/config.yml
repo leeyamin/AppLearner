@@ -4,7 +4,6 @@ application_name: collector  # application name
 sub_sample_rate: 1  # sub-sample rate
 aggregation_type: max  # aggregation type
 data_length_limit_in_minutes: 60  # data length limit in minutes
-train_ratio: 0.8  # training data ratio
 transformation_method: log  # transformation method: log, null
 scale_method: min-max  # scaling method: min-max, null
 look_back: 12  # look back window size

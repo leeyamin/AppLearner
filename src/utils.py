@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import os
 from typing import Union, Optional
@@ -46,6 +47,20 @@ def get_output_path(run_name: Optional[str], model_name: str) -> str:
         if not os.path.exists(output_path):
             return output_path
         idx += 1
+
+
+def seed_everything(seed: int = 42) -> None:
+    """
+    Seed all random number generators to make the results reproducible.
+    @param seed: the seed to use
+    @return None
+    """
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
 
 
 def save_config_to_file(output_path: str, config, filename='config.yml'):
