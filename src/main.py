@@ -1,12 +1,19 @@
+import time
+
 import src.framework__data_set as framework__data_set
 import src.utils as utils
-import src.config as config
-import src.models.utils as models_utils
-import src.models.train_and_validate as train_and_validate
-import src.dataset.utils as dataset_utils
+import src.train_and_validate as train_and_validate
+
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, message="MPS available but not used.")
+
 
 if __name__ == '__main__':
     utils.seed_everything()
+    start_time = time.time()
+    config = utils.get_config()
+    config.output_path = utils.get_output_path(config.run_name, config.model_name)
+    utils.save_config_to_file(config.output_path, config)
 
     data = framework__data_set.get_data_set(
         metric=config.metric,
@@ -14,18 +21,15 @@ if __name__ == '__main__':
         path_to_data='../data/'
     )
 
-    model = models_utils.get_model(config.model_name, config.hidden_size, config.num_stacked_layers, config.horizon)
+    data.set_configurations(config)
+    data.prepare_data_for_run(config.output_path, record_logs_to_txt=True)
+    data.split_to_train_and_test()
+    data.transform_and_scale_data()
 
-    (train_dataset, test_dataset, x_train, y_train, x_test, y_test, train_set_source_df_idx, test_set_source_df_idx,
-     scaling_attributes) = (dataset_utils.prepare_data_for_run(data))
-
-    train_and_validate.train_and_validate(model, config.device,
-                                          x_train, y_train, x_test, y_test, train_set_source_df_idx,
-                                          test_set_source_df_idx,
-                                          config.batch_size, config.num_epochs, config.learning_rate,
-                                          config.loss_function, scaling_attributes)
-
-    train_dataset.recover_dfs_from_concatenated()
-    test_dataset.recover_dfs_from_concatenated()
-
-    print("Done!")
+    model = utils.get_model(config.model_name, config.look_back, config.horizon, config.gpu_idx,
+                            config.output_path, config.trained_model_path)
+    model.log_every_n_steps = 1  # handles a warning
+    model = train_and_validate.train_and_validate(model, data, config)
+    print(f'Run time: {((time.time() - start_time) / 3600):.3f} hours')
+    utils.record_logs_to_txt(f'Run time: {((time.time() - start_time) / 3600):.3f} hours', config.output_path)
+    print('Done.')
