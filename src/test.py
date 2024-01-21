@@ -39,8 +39,9 @@ if __name__ == '__main__':
 
     utils.disable_pytorch_lightning_logging()
 
-    test_metrics_dict = train_or_validate_one_epoch(epoch_idx=None, model=model, data=data, look_back=config.look_back,
-                                                    output_path=None, mode='test', show_plots_flag=True, limit=1)
+    test_metrics_dict, _ = train_or_validate_one_epoch(epoch_idx=None, model=model, data=data,
+                                                       look_back=config.look_back,
+                                                       output_path=None, mode='test', show_plots_flag=True, limit=1)
 
     results_data = [
         ["Test",

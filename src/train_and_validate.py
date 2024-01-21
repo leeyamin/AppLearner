@@ -82,10 +82,13 @@ def train_or_validate_one_epoch(epoch_idx: Optional[int],
     print('Training...' if is_train else '\nValidating...')
     data_dfs = data.get_train_time_series_data() if is_train else data.get_val_time_series_data()
 
-    epoch_maes = []
-    epoch_mapes = []
-    epoch_mses = []
-    epoch_rmses = []
+    epoch_all_metrics_data = {
+        'df_indices': [],
+        'epoch_maes': [],
+        'epoch_mapes': [],
+        'epoch_mses': [],
+        'epoch_rmses': []
+    }
 
     series_dict = {}
 
@@ -132,20 +135,25 @@ def train_or_validate_one_epoch(epoch_idx: Optional[int],
 
         plot_actual_vs_forecast(series, forecast, mode, epoch_idx, df_idx, mae, mape, mse, rmse, df_idx_output_path,
                                 show_plots_flag)
-        epoch_maes.append(mae)
-        epoch_mapes.append(mape)
-        epoch_mses.append(mse)
-        epoch_rmses.append(rmse)
 
-    # compute epoch metrics (average of all dfs)
+        epoch_all_metrics_data['df_indices'].append(df_idx)
+        epoch_all_metrics_data['epoch_maes'].append(mae)
+        epoch_all_metrics_data['epoch_mapes'].append(mape)
+        epoch_all_metrics_data['epoch_mses'].append(mse)
+        epoch_all_metrics_data['epoch_rmses'].append(rmse)
+
+    # epoch metrics is the average of all dfs
     epoch_metrics_dict = {
-        "mae": sum(epoch_maes) / len(epoch_maes),
-        "mape": sum(epoch_mapes) / len(epoch_mapes),
-        "mse": sum(epoch_mses) / len(epoch_mses),
-        "rmse": sum(epoch_rmses) / len(epoch_rmses)
+        "mae": np.mean(epoch_all_metrics_data['epoch_maes']),
+        "mape": np.mean(epoch_all_metrics_data['epoch_mapes']),
+        "mse": np.mean(epoch_all_metrics_data['epoch_mses']),
+        "rmse": np.mean(epoch_all_metrics_data['epoch_rmses'])
     }
 
-    return epoch_metrics_dict
+    for key in epoch_all_metrics_data.keys():
+        epoch_all_metrics_data[key] = [round(value, 4) for value in epoch_all_metrics_data[key]]
+
+    return epoch_metrics_dict, epoch_all_metrics_data
 
 
 def write_metrics_to_tensorboard(epoch_idx: int,
@@ -242,7 +250,6 @@ def save_metrics_to_csv(metrics_dict, epoch_idx, output_path, filename, is_best_
     if is_best_val:
         metrics_dict['epoch_idx'] = epoch_idx
 
-    os.makedirs(output_path, exist_ok=True)
     csv_file_path = os.path.join(output_path, f'{filename}.csv')
 
     if is_best_val:
@@ -275,12 +282,18 @@ def train_and_validate(model: Union[TCNModel, NBEATSModel, RNNModel],
         train_writer = SummaryWriter(log_dir=f'{config.output_path}/tensorboard/train')
         val_writer = SummaryWriter(log_dir=f'{config.output_path}/tensorboard/val')
 
-        epoch_train_metrics_dict = train_or_validate_one_epoch(epoch_idx, model, data, look_back=config.look_back,
-                                                               mode='train', output_path=config.output_path,
-                                                               show_plots_flag=False, limit=1)
-        epoch_val_metrics_dict = train_or_validate_one_epoch(epoch_idx, model, data, look_back=config.look_back,
-                                                             mode='validation', output_path=config.output_path,
-                                                             show_plots_flag=False, limit=1)
+        (epoch_train_metrics_dict,
+         epoch_train_all_metrics_data) = train_or_validate_one_epoch(epoch_idx, model, data, look_back=config.look_back,
+                                                                     mode='train',
+                                                                     output_path=config.output_path,
+                                                                     show_plots_flag=False,
+                                                                     limit=20)
+        (epoch_val_metrics_dict,
+         epoch_val_all_metrics_data) = train_or_validate_one_epoch(epoch_idx, model, data, look_back=config.look_back,
+                                                                   mode='validation',
+                                                                   output_path=config.output_path,
+                                                                   show_plots_flag=False,
+                                                                   limit=20)
 
         write_metrics_to_tensorboard(epoch_idx, epoch_train_metrics_dict, epoch_val_metrics_dict,
                                      train_writer, val_writer)
@@ -291,13 +304,17 @@ def train_and_validate(model: Union[TCNModel, NBEATSModel, RNNModel],
         total_epochs_train_metrics_dict[epoch_idx] = epoch_train_metrics_dict
         total_epochs_val_metrics_dict[epoch_idx] = epoch_val_metrics_dict
 
-        save_metrics_to_csv(total_epochs_train_metrics_dict, epoch_idx, config.output_path, 'train_metrics')
-        save_metrics_to_csv(total_epochs_val_metrics_dict, epoch_idx, config.output_path, 'val_metrics')
+        save_metrics_to_csv(total_epochs_train_metrics_dict.copy(), epoch_idx, config.output_path,
+                            'train_metrics_across_epochs')
+        save_metrics_to_csv(total_epochs_val_metrics_dict, epoch_idx, config.output_path,
+                            'val_metrics_across_epochs')
 
         if float(epoch_val_metrics_dict['mae']) < mae_best_val:
             mae_best_val = float(epoch_val_metrics_dict['mae'])
             save_metrics_to_csv(epoch_val_metrics_dict, epoch_idx, config.output_path, 'best_val_metrics',
                                 is_best_val=True)
+            utils.save_dict_to_csv(epoch_train_all_metrics_data, config.output_path, 'train_all_metrics_data')
+            utils.save_dict_to_csv(epoch_val_all_metrics_data, config.output_path, 'val_all_metrics_data')
 
         plot_metrics(total_epochs_train_metrics_dict, total_epochs_val_metrics_dict,
                      config.output_path, config.model_name, mae_best_val, show_plots_flag=False)

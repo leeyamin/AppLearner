@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import torch
 import os
 from typing import Union, Optional
@@ -35,15 +36,13 @@ def get_output_path(run_name: Optional[str], model_name: str) -> str:
     @param model_name: the name of the model
     @return output_path: the path to the output folder
     """
-    if run_name is not None:
-        output_path = f"../output/{run_name}"
-        if not os.path.exists(output_path):
-            return output_path
-        else:
-            raise ValueError(f"Run name {run_name} already exists.")
+    base_path = os.path.join('..', 'output')
     idx = 0
     while True:
-        output_path = f"../output/{model_name}_{idx}"
+        if run_name is not None:
+            output_path = os.path.join(base_path, f'{run_name}_{idx}')
+        else:
+            output_path = os.path.join(base_path, f'{model_name}_{idx}')
         if not os.path.exists(output_path):
             return output_path
         idx += 1
@@ -193,3 +192,14 @@ def load_model(model_name, work_dir, file_name='last-epoch=0.ckpt'):
     model = model_class.load_from_checkpoint(model_name=model_name, work_dir=work_dir, file_name=file_name)
 
     return model
+
+
+def save_dict_to_csv(dict, output_path, filename):
+    """
+    Save a dictionary to a csv file.
+    @param dict: the dictionary to save
+    @param output_path: path of the output folder
+    @param filename: name of the csv file
+    """
+    df_dict = pd.DataFrame(dict)
+    df_dict.to_csv(f'{output_path}/{filename}.csv', index=False)
