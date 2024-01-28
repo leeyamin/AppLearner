@@ -4,15 +4,13 @@ application_name: collector  # application name
 sub_sample_rate: 1  # sub-sample rate
 aggregation_type: max  # aggregation type
 data_length_limit_in_minutes: 60  # data length limit in minutes
-transformation_method: log  # transformation method: log, null
-scale_method: min-max  # scaling method: min-max, null
+transformation_method: null  # transformation method: log, null
+scale_method: null  # scaling method: min-max, null
 look_back: 12  # look back window size
 horizon: 2  # prediction horizon
-model_name: LSTM  # model name: TCN, NBEATS, DeepAR, LSTM
+model_name: LSTM  # model name: TCN, DeepAR, LSTM
 trained_model_path: null  # path to a pre-trained model
 num_epochs: 50  # number of epochs
 batch_size: 4  # batch size
-learning_rate: 0.0001  # learning rate
-loss_function: L1Loss  # loss function type
 output_path: null  # output path
-run_name: LSTM_limit10  # optional run name
+run_name: check_fastai  # optional run name

@@ -2,17 +2,20 @@ import matplotlib.pyplot as plt
 import numpy as np
 from tabulate import tabulate
 import darts
-from darts.models import TCNModel, NBEATSModel, RNNModel, BlockRNNModel
+from darts.models import TCNModel, RNNModel, BlockRNNModel
 from torch.utils.tensorboard import SummaryWriter
 from typing import Dict, Union, Optional
 import os
 from tqdm import tqdm
 import time
 import pandas as pd
+import warnings
 
 import src.utils as utils
 from src.utils import Config
 from src.framework__data_set import TimeSeriesDataSet
+
+warnings.filterwarnings("ignore", category=UserWarning)
 
 
 def format_number(number: float) -> str:
@@ -61,7 +64,7 @@ def plot_actual_vs_forecast(series, forecast, mode, epoch_idx, df_idx, mae, mape
 
 
 def train_or_validate_one_epoch(epoch_idx: Optional[int],
-                                model: Union[TCNModel, NBEATSModel, RNNModel, BlockRNNModel],
+                                model: Union[TCNModel, RNNModel, BlockRNNModel],
                                 data: TimeSeriesDataSet, look_back: int,
                                 mode: str, output_path: str, show_plots_flag: bool,
                                 limit: Optional[int] = None) -> Dict:
@@ -260,9 +263,9 @@ def save_metrics_to_csv(metrics_dict, epoch_idx, output_path, filename, is_best_
     df.to_csv(csv_file_path, header=True)
 
 
-def train_and_validate(model: Union[TCNModel, NBEATSModel, RNNModel],
+def train_and_validate(model: Union[TCNModel, RNNModel],
                        data: TimeSeriesDataSet,
-                       config: Config) -> Union[TCNModel, NBEATSModel, RNNModel, BlockRNNModel]:
+                       config: Config) -> Union[TCNModel, RNNModel, BlockRNNModel]:
     """
     Train and validate the model across epochs; record results and save best model.
     @param model: model to train and validate from the darts library

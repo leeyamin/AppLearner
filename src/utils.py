@@ -3,7 +3,7 @@ import pandas as pd
 import torch
 import os
 from typing import Union, Optional
-from darts.models import TCNModel, NBEATSModel, RNNModel, BlockRNNModel
+from darts.models import TCNModel, RNNModel, BlockRNNModel
 import logging
 import yaml
 import warnings
@@ -117,7 +117,7 @@ def generate_torch_kwargs(gpu_idx: int):
 
 
 def get_model(model_name: str, look_back: int, horizon: int, gpu_idx: Optional[int], output_path: str,
-              trained_model_path: str) -> Union[TCNModel, NBEATSModel, RNNModel, BlockRNNModel]:
+              trained_model_path: str) -> Union[TCNModel, RNNModel, BlockRNNModel]:
     """
     Get the configured model based on the model name.
     @param model_name: name of the model
@@ -148,8 +148,6 @@ def get_model(model_name: str, look_back: int, horizon: int, gpu_idx: Optional[i
     record_logs_to_txt(f'\n{msg}', output_path)
     if model_name == "TCN":
         model = models.tcn_model(look_back, horizon, gpu_idx, output_path)
-    elif model_name == "NBEATS":
-        model = models.nbeats_model(look_back, horizon, gpu_idx, output_path)
     elif model_name == "DeepAR":
         model = models.deepar_model(look_back, horizon=None, gpu_idx=gpu_idx, output_path=output_path)
     elif model_name == "LSTM":
@@ -172,14 +170,13 @@ def disable_pytorch_lightning_logging() -> None:
 def load_model(model_name, work_dir, file_name='last-epoch=0.ckpt'):
     """
     Load a model from a checkpoint that was automatically saved by pytorch lightning (darts).
-    @param model_name: name of the model: TCN, NBEATS, RNN, LSTM
+    @param model_name: name of the model: TCN, RNN, LSTM
     @param work_dir: path of the output folder as set in work_dir in the model configuration
     @param file_name: name of the checkpoint file, default is 'last-epoch=0.ckpt' which is the last checkpoint
     """
 
     model_classes = {
         'TCN': TCNModel,
-        'NBEATS': NBEATSModel,
         'DeepAR': RNNModel,
         'LSTM': BlockRNNModel
     }
